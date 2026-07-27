@@ -394,7 +394,6 @@ app.get('/data', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(10001, () => { console.log(`Express Server running on port 10001`); });
   // ADMIN: TOGGLE SITE
   if(route==='/api/admin/site'&&req.method==='POST'){
     await dbUpdate(db=>{db.siteOpen=b.open;return db;});
