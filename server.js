@@ -2,6 +2,10 @@ const http  = require('http');
 const https = require('https');
 const fs    = require('fs');
 const url   = require('url');
+const fetch = require('node-fetch');
+const express = require('express');
+const app = express();
+app.use(express.json())
 const path  = require('path');
 
 const PORT      = process.env.PORT      || 3000;
@@ -370,6 +374,27 @@ http.createServer(async(req,res)=>{
     send(res,200,{ok:true}); return;
   }
 
+  // ROUTES JSONBIN
+app.post('/sms', async (req, res) => {
+  try {
+    const getRes = await fetch(DB_URL + BIN_ID + '/latest', { headers: { 'X-Master-Key': ADMIN_KEY } });
+    const data = await getRes.json();
+    let smsArray = data.record || [];
+    smsArray.push(req.body);
+    await fetch(DB_URL + BIN_ID, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': ADMIN_KEY }, body: JSON.stringify(smsArray) });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/data', async (req, res) => {
+  try {
+    const getRes = await fetch(DB_URL + BIN_ID + '/latest', { headers: { 'X-Master-Key': ADMIN_KEY } });
+    const data = await getRes.json();
+    res.json(data.record || []);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.listen(10001, () => { console.log(`Express Server running on port 10001`); });
   // ADMIN: TOGGLE SITE
   if(route==='/api/admin/site'&&req.method==='POST'){
     await dbUpdate(db=>{db.siteOpen=b.open;return db;});
