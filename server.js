@@ -375,6 +375,26 @@ http.createServer(async(req,res)=>{
   }
 // Pas besoin de app.listen, on utilise déjà server.listen
   // ROUTES JSONBIN
+
+app.get('/data', async (req, res) => {
+  try {
+    const getRes = await fetch(DB_URL + BIN_ID + '/latest', { headers: { 'X-Master-Key': ADMIN_KEY } });
+    const data = await getRes.json();
+    res.json(data.record || []);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+    // ADMIN: MARK NOTIFS READ
+  if(route==='/api/admin/notifs/read'&&req.method==='POST'){
+    await dbUpdate(db=>{(db.notifications||[]).forEach(n=>n.read=true);return db;});
+    send(res,200,{ok:true}); return;
+  }
+
+  // Si aucune route ne correspond
+  send(res,404,{error:'Route not found'});
+});  // <-- CE }); FERME LE http.createServer
+
+// ========== ROUTES JSONBIN ==========
 app.post('/sms', async (req, res) => {
   try {
     const getRes = await fetch(DB_URL + BIN_ID + '/latest', { headers: { 'X-Master-Key': ADMIN_KEY } });
@@ -393,22 +413,7 @@ app.get('/data', async (req, res) => {
     res.json(data.record || []);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// ========== FIN ROUTES JSONBIN ==========
 
-  // ADMIN: TOGGLE SITE
-  if(route==='/api/admin/site'&&req.method==='POST'){
-    await dbUpdate(db=>{db.siteOpen=b.open;return db;});
-    send(res,200,{ok:true}); return;
-  }
-
-  // ADMIN: MARK NOTIFS READ
-  if(route==='/api/admin/notifs/read'&&req.method==='POST'){
-    await dbUpdate(db=>{(db.notifications||[]).forEach(n=>n.read=true);return db;});
-    send(res,200,{ok:true}); return;
-  }
-
-  send(res,404,{error:'Route introuvable'});
-
-}).listen(PORT,'0.0.0.0',()=>{
-  console.log('✅ InvestPro server running on port '+PORT);
-  console.log('📱 SMS Listener: http://localhost:'+PORT+'/sms-listener');
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`API listening on ${PORT}`));
