@@ -666,14 +666,35 @@ var refCode='INV-'+Math.random().toString(36).substr(2,6).toUpperCase();
   var nu={id:Date.now().toString(),name:name,email:email,phone:phone,pass:pw,joinedAt:new Date().toISOString(),refBy:refBy,refCode:refCode,depositBalance:0,withdrawBalance:0,totalEarned:0,activeVip:0,activeInvestments:[],transactions:[],pendingActivReturns:[],pendingReturns:[],spinTurns:0,spinEarned:0,refCount:0};
 db.users.push(nu);
 if(refBy){
+    // Logique propre: chercher le parrain et créditer 1 tour
+    var parrain=null;
     for(var j=0;j<db.users.length;j++){
       if(db.users[j].refCode===refBy||db.users[j].email===refBy){
-        db.users[j].spinTurns=(db.users[j].spinTurns||0)+1;
-        db.users[j].refCount=(db.users[j].refCount||0)+1;
-        db.users[j].transactions=db.users[j].transactions||[];
-        db.users[j].transactions.unshift({type:'referral',label:'Parrainage de '+name+' — +1 tour',amount:0,status:'done',date:new Date().toISOString()});
-        break;
+        parrain=db.users[j]; break;
       }
+    }
+    if(parrain && parrain.id !== nu.id){ // Anti-auto-parrainage
+      parrain.spinTurns=(parrain.spinTurns||0)+1;
+      parrain.refCount=(parrain.refCount||0)+1;
+      parrain.transactions=parrain.transactions||[];
+      parrain.transactions.unshift({
+        type:'referral',
+        label:'Parrainage de '+name+' — +1 tour de roue',
+        amount:0, status:'done',
+        date:new Date().toISOString()
+      });
+      // Stocker la relation de parrainage (inspiré du fichier parrainage-1.js)
+      db.referrals=db.referrals||[];
+      db.referrals.push({
+        sponsorId:parrain.id,
+        sponsorEmail:parrain.email,
+        referredUserId:nu.id,
+        referredUserEmail:nu.email,
+        referredUserName:name,
+        status:'completed',
+        spinCredited:true,
+        createdAt:new Date().toISOString()
+      });
     }
   }
 await dbWrite(db);
@@ -1518,24 +1539,55 @@ async function loadFilleuls(){
   var db=await dbRead();
   if(!db)return;
   var myCode=CU.refCode||('INV-'+CU.id.toString().substr(-6).toUpperCase());
+
+  // Trouver tous les filleuls directs (niveau 1)
   var filleuls=db.users.filter(function(u){
     return u.refBy===myCode||u.refBy===CU.email;
   });
-  if(!filleuls.length){el.innerHTML='<div class="empty">Aucun filleul pour l\'instant. Partagez votre code !</div>';return;}
-  el.innerHTML=filleuls.map(function(f){
+
+  // ── Synchroniser spinTurns avec le vrai nombre de filleuls ──
+  // Chaque filleul inscrit = 1 tour de roue garanti
+  var realSpinTurns=filleuls.length;
+
+  // Si spinTurns en DB est différent du nombre réel de filleuls -> corriger
+  var dbUser=db.users.find(function(u){return u.email===CU.email;});
+  if(dbUser && (dbUser.spinTurns||0) !== realSpinTurns){
+    // Mettre à jour en DB (correction silencieuse)
+    await dbUpdate(function(db){
+      var u=db.users.find(function(x){return x.email===CU.email;});
+      if(u) u.spinTurns=realSpinTurns;
+      return db;
+    });
+  }
+
+  // Mettre à jour S.spinTurns localement
+  S.spinTurns=realSpinTurns;
+  S.refCount=filleuls.length;
+  CU.spinTurns=realSpinTurns;
+  CU.refCount=filleuls.length;
+
+  // Mettre à jour l'affichage des tours
+  var stEl=document.getElementById('spinTurns');
+  var tlEl=document.getElementById('turnsLeft');
+  var rcEl=document.getElementById('refCount');
+  if(stEl) stEl.textContent=realSpinTurns;
+  if(rcEl) rcEl.textContent=filleuls.length;
+  if(tlEl) tlEl.textContent=realSpinTurns>0
+    ? realSpinTurns+' tour'+(realSpinTurns>1?'s':'')+' disponible'+(realSpinTurns>1?'s':'')
+    : 'Parrainez des amis pour obtenir des tours !';
+
+  // Afficher la liste
+  if(!filleuls.length){
+    el.innerHTML='<div class="empty">Aucun filleul pour l\'instant. Partagez votre lien !</div>';
+    return;
+  }
+  el.innerHTML=filleuls.map(function(f,i){
     var d=new Date(f.joinedAt).toLocaleDateString('fr-FR');
     var ini=f.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#12151C;border-radius:8px;margin-bottom:5px;">'
-      +'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#0A0C10;flex-shrink:0;">'+ini+'</div>'
-      +'<div style="flex:1;"><div style="font-size:12px;font-weight:600;">'+f.name+'</div><div style="font-size:10px;color:var(--muted);">Inscrit le '+d+'</div></div>'
-      +'<div style="color:var(--gold);font-size:11px;font-weight:700;">+1 🎰</div>'
-      +'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#12151C;border-radius:8px;margin-bottom:6px;">'      +'<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#0A0C10;flex-shrink:0;">'+ini+'</div>'      +'<div style="flex:1;">'        +'<div style="font-size:12px;font-weight:600;">'+f.name+'</div>'        +'<div style="font-size:10px;color:var(--muted);">Inscrit le '+d+'</div>'      +'</div>'      +'<div style="text-align:right;">'        +'<div style="color:var(--gold);font-size:12px;font-weight:700;">🎰 +1 tour</div>'        +'<div style="font-size:10px;color:var(--green);">Filleul #'+(i+1)+'</div>'      +'</div>'      +'</div>';
   }).join('');
-  // Update refCount
-  document.getElementById('refCount').textContent=filleuls.length;
-
-  S.refCount=filleuls.length;
 }
+
 function copyRef(){
   var myCode=CU.refCode||('INV-'+CU.id.toString().substr(-6).toUpperCase());
   var link=window.location.origin+window.location.pathname+'?ref='+myCode;
