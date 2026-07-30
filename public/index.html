@@ -125,26 +125,45 @@ function loadEmailConfig(){
 }
 
 function initEmailJS(){
-  if(EMAILJS_PUBLIC_KEY) emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+  // Charger config depuis localStorage
+  var cfg=JSON.parse(localStorage.getItem('ejs_cfg')||'null');
+  if(cfg){
+    EMAILJS_PUBLIC_KEY  = cfg.pk  || EMAILJS_PUBLIC_KEY;
+    EMAILJS_SERVICE_ID  = cfg.svc || EMAILJS_SERVICE_ID;
+    EMAILJS_TEMPLATE_ID = cfg.tpl || EMAILJS_TEMPLATE_ID;
+    ADMIN_EMAIL         = cfg.em  || ADMIN_EMAIL;
+  }
+  if(EMAILJS_PUBLIC_KEY){
+    try{ emailjs.init({publicKey: EMAILJS_PUBLIC_KEY}); console.log('EmailJS initialisé ✅'); }
+    catch(e){ console.error('EmailJS init error:', e.message); }
+  }
 }
 
 async function sendDepositEmail(dep){
-  if(!EMAILJS_PUBLIC_KEY || !ADMIN_EMAIL) return; // Pas configuré
+  // Vérifier config EmailJS
+  if(!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !ADMIN_EMAIL){
+    console.log('EmailJS non configuré - notification ignorée');
+    return;
+  }
   try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    var params = {
       to_email:    ADMIN_EMAIL,
-      user_name:   dep.userName,
-      user_email:  dep.userEmail,
-      user_phone:  dep.userTel,
-      amount:      dep.amount.toLocaleString() + ' FCFA',
-      operator:    dep.operator,
-      tx_code:     dep.txCode || 'Non fourni',
+      user_name:   dep.userName   || 'Inconnu',
+      user_email:  dep.userEmail  || '',
+      user_phone:  dep.userTel    || '',
+      amount:      (dep.amount||0).toLocaleString() + ' FCFA',
+      operator:    dep.operator   || '',
+      tx_code:     dep.txCode     || 'Non fourni',
+      sms_text:    dep.smsText    || 'Aucun SMS fourni',
       date:        new Date(dep.date).toLocaleString('fr-FR'),
-      approve_url: window.location.href
-    });
+      approve_url: window.location.origin || window.location.href
+    };
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
     console.log('Email admin envoyé ✅');
+    toast('📧 Notification envoyée à l\'admin');
   } catch(e) {
-    console.log('Email non envoyé:', e.message);
+    console.error('Email non envoyé:', e.message, e);
+    // Ne pas bloquer l'utilisateur si l'email échoue
   }
 }
 initEmailJS();
@@ -1082,6 +1101,8 @@ async function confirmDepWithSms(){
   document.getElementById('depStep3Msg').textContent=
     a.toLocaleString()+' FCFA soumis. Votre solde sera credite apres validation admin.';
   toast('Depot soumis ! En attente de validation.');
+  // Envoyer notification email à l'admin
+  sendDepositEmail(dep);
 }
 
 var wdOp=null;
@@ -1159,7 +1180,7 @@ document.getElementById('aInvC').textContent=ta;
 // Pending deposits
 var pDeps=deps.filter(function(d){return d.status==='pending';});
 document.getElementById('pendList').innerHTML=pDeps.length?pDeps.map(function(d){
-return '<div class="admin-row"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+d.userName+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div><div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:12px;">'+d.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')">✗</button></div></div>';
+return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+d.userName+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0A0C10;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+d.smsText+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
 }).join(''):'<div class="empty">Aucun dépôt en attente.</div>';
 // Deposit history
 document.getElementById('depHist').innerHTML=deps.filter(function(d){return d.status!=='pending';}).slice(0,12).map(function(d){
@@ -1168,7 +1189,7 @@ return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;
 // Pending withdrawals
 var pWds=wds.filter(function(w){return w.status==='pending';});
 document.getElementById('pwdList').innerHTML=pWds.length?pWds.map(function(w){
-return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+w.userName+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+w.userName+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\')">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
+return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+w.userName+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+w.userName+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\',(w.netAmount||Math.round(w.amount*0.95)))">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
 }).join(''):'<div class="empty">Aucun retrait en attente.</div>';
 // Withdrawal history
 document.getElementById('wdHist').innerHTML=wds.filter(function(w){return w.status!=='pending';}).slice(0,12).map(function(w){
@@ -1231,15 +1252,26 @@ toast('Dépôt rejeté','err');renderAdmin();
 }
 
 var _wdId=null;
-function approveWd(id,name,tel,amount,op){
-_wdId=id;
-document.getElementById('pmName').textContent=name;
-document.getElementById('pmTel').textContent=tel;
-document.getElementById('pmAmt').textContent=amount.toLocaleString()+' FCFA';
-var lnk=document.getElementById('momoPayLink');
-if(op==='MTN MoMo'){lnk.href='tel:*126*1*1*'+tel+'*'+amount+'%23';lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FFCD00,#E6B800);color:#000;';lnk.textContent='📱 Ouvrir MTN MoMo — '+amount.toLocaleString()+' FCFA';}
-else{lnk.href='tel:*144*1*'+tel+'*'+amount+'%23';lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FF6600,#E65C00);color:#fff;';lnk.textContent='📱 Ouvrir Orange Money — '+amount.toLocaleString()+' FCFA';}
-document.getElementById('payModal').style.display='flex';
+function approveWd(id,name,tel,amount,op,netAmt){
+  _wdId=id;
+  // Calculer le montant net à envoyer (après frais 5%)
+  var toSend = netAmt || Math.round(amount * 0.95);
+  var frais  = amount - toSend;
+  document.getElementById('pmName').textContent=name;
+  document.getElementById('pmTel').textContent=tel;
+  document.getElementById('pmAmt').innerHTML=
+    toSend.toLocaleString()+' FCFA <small style="color:var(--muted);font-size:10px;">('+amount.toLocaleString()+' - '+frais.toLocaleString()+' frais 5%)</small>';
+  var lnk=document.getElementById('momoPayLink');
+  if(op==='MTN MoMo'){
+    lnk.href='tel:*126*1*1*'+tel+'*'+toSend+'%23';
+    lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FFCD00,#E6B800);color:#000;';
+    lnk.textContent='📱 Envoyer '+toSend.toLocaleString()+' FCFA via MTN MoMo';
+  } else {
+    lnk.href='tel:*144*1*'+tel+'*'+toSend+'%23';
+    lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FF6600,#E65C00);color:#fff;';
+    lnk.textContent='📱 Envoyer '+toSend.toLocaleString()+' FCFA via Orange Money';
+  }
+  document.getElementById('payModal').style.display='flex';
 }
 function closePayModal(){document.getElementById('payModal').style.display='none';_wdId=null;}
 async function confirmPayDone(){
