@@ -504,14 +504,29 @@ initEmailJS();
 // ══════════════════════════════════════════
 // DATABASE: JSONBin.io (shared across all devices)
 // ══════════════════════════════════════════
-var BIN_ID  = '6a4cdd5cf5f4af5e296bb50b';
-var API_KEY = '$2a$10$WiRdDM1vwwyaoA.yf/.XkuA/2173q1VIdQ56RJyfD4vGgp8U5tu.O';
+// Clés JSONBin cachées côté serveur
+// Le HTML communique uniquement via le backend
+var BIN_ID  = '';
+var API_KEY = '';
 // Save for compatibility
 try{localStorage.setItem('ip_bin_id', BIN_ID); localStorage.setItem('ip_api_key', API_KEY);}catch(e){}
 var DB_URL  = 'https://api.jsonbin.io/v3/b/';
 
 var dbCache = null;
 var isSaving = false;
+
+// ── Hash SHA-256 du mot de passe ──
+async function hashPassword(pass) {
+  try {
+    var msgBuf = new TextEncoder().encode(pass);
+    var hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
+    var hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  } catch(e) {
+    // Fallback si crypto non disponible (vieux navigateurs)
+    return pass;
+  }
+}
 
 async function dbRead() {
   if (!BIN_ID || !API_KEY) return null;
@@ -622,6 +637,17 @@ function showAuth(){
 
 // ── STATE ──
 var CU = null;
+// ── Sécurité: Sanitisation XSS ──
+function esc(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
 var S  = { depositBalance:0, withdrawBalance:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
@@ -647,6 +673,7 @@ if(inp.toLowerCase()==='quentin'&&pw==='Quentin'){
 CU={id:'admin',name:'Quentin',email:'admin@investpro',isAdmin:true,joinedAt:new Date().toISOString()};
 sessionStorage.setItem('cu',JSON.stringify(CU));enterApp();return;
 }
+pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
 showSpinner(false);
@@ -668,11 +695,15 @@ var email=document.getElementById('rEmail').value.trim().toLowerCase();
 var phone=document.getElementById('rPhone').value.trim();
 var pw=document.getElementById('rPass').value;
 var pw2=document.getElementById('rPass2').value;
-if(!name){authErr('Nom requis.');return;}
-if(!email||email.indexOf('@')<0){authErr('Email invalide.');return;}
+// Validation email stricte
+  var emailOk=/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
+  if(!name||name.length<2){authErr('Nom invalide (2 caractères min).');return;}
+  if(!email||!emailOk){authErr('Email invalide. Format requis: nom@gmail.com');return;}
 if(!phone||phone.length<8){authErr('Numéro invalide.');return;}
-if(pw.length<6){authErr('Mot de passe trop court.');return;}
+if(!/^[A-Z]/.test(pw)){authErr('Le mot de passe doit commencer par une majuscule.');return;}
+if(pw.length<6){authErr('Mot de passe trop court (6 car. min).');return;}
 if(pw!==pw2){authErr('Mots de passe différents.');return;}
+pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
 if(!db){showSpinner(false);authErr('Connexion JSONBin échouée. Vérifiez internet.');return;}
@@ -1180,25 +1211,25 @@ document.getElementById('aInvC').textContent=ta;
 // Pending deposits
 var pDeps=deps.filter(function(d){return d.status==='pending';});
 document.getElementById('pendList').innerHTML=pDeps.length?pDeps.map(function(d){
-return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+d.userName+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0A0C10;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+d.smsText+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
+return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+esc(d.userName)+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0A0C10;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+esc(d.smsText)+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
 }).join(''):'<div class="empty">Aucun dépôt en attente.</div>';
 // Deposit history
 document.getElementById('depHist').innerHTML=deps.filter(function(d){return d.status!=='pending';}).slice(0,12).map(function(d){
-return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+d.userName+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+new Date(d.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--green);font-weight:700;font-size:11px;">+'+d.amount.toLocaleString()+'</span><span class="badge '+(d.status==='approved'?'b-ok':'b-red')+'">'+d.status+'</span></div>';
+return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+esc(d.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+new Date(d.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--green);font-weight:700;font-size:11px;">+'+d.amount.toLocaleString()+'</span><span class="badge '+(d.status==='approved'?'b-ok':'b-red')+'">'+d.status+'</span></div>';
 }).join('')||'<div class="empty">Aucun.</div>';
 // Pending withdrawals
 var pWds=wds.filter(function(w){return w.status==='pending';});
 document.getElementById('pwdList').innerHTML=pWds.length?pWds.map(function(w){
-return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+w.userName+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+w.userName+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\',(w.netAmount||Math.round(w.amount*0.95)))">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
+return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+esc(w.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+esc(w.userName)+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\',(w.netAmount||Math.round(w.amount*0.95)))">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
 }).join(''):'<div class="empty">Aucun retrait en attente.</div>';
 // Withdrawal history
 document.getElementById('wdHist').innerHTML=wds.filter(function(w){return w.status!=='pending';}).slice(0,12).map(function(w){
-return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+w.userName+' → '+w.userTel+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' · '+new Date(w.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--orange);font-weight:700;font-size:11px;">'+w.amount.toLocaleString()+'</span><span class="badge '+(w.status==='approved'?'b-ok':'b-red')+'">'+w.status+'</span></div>';
+return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+esc(w.userName)+' → '+w.userTel+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' · '+new Date(w.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--orange);font-weight:700;font-size:11px;">'+w.amount.toLocaleString()+'</span><span class="badge '+(w.status==='approved'?'b-ok':'b-red')+'">'+w.status+'</span></div>';
 }).join('')||'<div class="empty">Aucun.</div>';
 // Users
 document.getElementById('usersList').innerHTML=users.length?users.map(function(u){
 var ini=u.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-return '<div class="admin-row"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#64B5F6,#81C784);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#0A0C10;flex-shrink:0;">'+ini+'</div><div style="flex:1;"><div style="font-weight:600;font-size:12px;">'+u.name+'</div><div style="font-size:10px;color:var(--muted);">'+u.email+' · '+u.phone+'</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;"><div style="text-align:center;"><div style="font-weight:700;color:var(--gold);">'+(u.depositBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Dépôt</div></div><div style="text-align:center;"><div style="font-weight:700;color:var(--green);">'+(u.withdrawBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Retrait</div></div><div style="text-align:center;"><div style="font-weight:700;">VIP '+(u.activeVip||0)+'</div><div style="font-size:9px;color:var(--muted);">Niveau</div></div></div><button onclick=\"deleteUser(this.getAttribute(\'data-e\'),this.getAttribute(\'data-n\'))\" data-e=\"'+u.email+'\" data-n=\"'+u.name+'\" style=\"padding:5px 10px;border-radius:6px;border:1px solid rgba(255,77,77,0.3);background:rgba(255,77,77,0.1);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;\">🗑️</button></div>';
+return '<div class="admin-row"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#64B5F6,#81C784);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#0A0C10;flex-shrink:0;">'+ini+'</div><div style="flex:1;"><div style="font-weight:600;font-size:12px;">'+esc(u.name)+'</div><div style="font-size:10px;color:var(--muted);">'+u.email+' · '+u.phone+'</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;"><div style="text-align:center;"><div style="font-weight:700;color:var(--gold);">'+(u.depositBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Dépôt</div></div><div style="text-align:center;"><div style="font-weight:700;color:var(--green);">'+(u.withdrawBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Retrait</div></div><div style="text-align:center;"><div style="font-weight:700;">VIP '+(u.activeVip||0)+'</div><div style="font-size:9px;color:var(--muted);">Niveau</div></div></div><button onclick=\"deleteUser(this.getAttribute(\'data-e\'),this.getAttribute(\'data-n\'))\" data-e=\"'+u.email+'\" data-n=\"'+esc(u.name)+'\" style=\"padding:5px 10px;border-radius:6px;border:1px solid rgba(255,77,77,0.3);background:rgba(255,77,77,0.1);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;\">🗑️</button></div>';
 }).join(''):'<div class="empty">Aucun utilisateur.</div>';
 // Investments
 var allInv=[];users.forEach(function(u){(u.activeInvestments||[]).forEach(function(x){allInv.push(Object.assign({},x,{uName:u.name}));});});
