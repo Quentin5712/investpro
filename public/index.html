@@ -234,6 +234,7 @@ initEmailJS();
 <button class="tab" onclick="goPage('withdraw')">💸 Retrait</button>
 <button class="tab" onclick="goPage('history')">📋 Historique</button>
 <button class="tab" onclick="goPage('share')" style="background:linear-gradient(135deg,#9C27B0,#673AB7);color:#fff;border-color:transparent;">🔗 Partager</button>
+<button class="tab" onclick="goPage('cgu')">📋 CGU</button>
 <button class="tab" onclick="goPage('profile')">👤 Profil</button>
 <button class="tab" id="adminTab" style="display:none;background:linear-gradient(135deg,#FF6B35,#E84393);color:#fff;border-color:transparent;" onclick="goPage('admin')">⚙️ Admin</button>
 </div>
@@ -393,6 +394,82 @@ initEmailJS();
 <div style="font-size:12px;color:var(--muted);margin-bottom:10px;" id="turnsLeft"></div>
 <button id="spinBtn" onclick="spinWheel()" style="padding:11px 28px;border-radius:9px;border:none;cursor:pointer;background:linear-gradient(135deg,#9C27B0,#E91E63);color:#fff;font-family:var(--font-head);font-weight:800;font-size:13px;">🎰 Tourner</button>
 </div>
+</div>
+
+<div class="page" id="page-cgu">
+<div class="sec-label">Légal</div>
+<div class="sec-title">Conditions d'utilisation</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">📋 Présentation</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    InvestPro est une plateforme d'investissement mobile permettant aux utilisateurs de faire fructifier leur argent via des plans VIP. En vous inscrivant, vous acceptez les présentes conditions.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Tout nouveau compte reçoit <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur le solde dépôt à l'inscription. Ce bonus peut être utilisé pour activer un plan VIP ou investir.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">💰 Plans VIP</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    <strong style="color:var(--text);">Partie 1 — Activation :</strong> Activez un niveau VIP avec un montant fixe. Vous recevrez un retour ×100 après la durée d'échéance (90 à 120 jours selon le niveau).<br><br>
+    <strong style="color:var(--text);">Partie 2 — Investissement :</strong> Investissez sur votre niveau VIP débloqué (maximum 2 fois par niveau). Vous recevrez un retour majoré après la durée indiquée.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">📲 Dépôts</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Les dépôts s'effectuent via MTN MoMo ou Orange Money. Après envoi, collez le SMS de confirmation reçu de votre opérateur. Votre solde est crédité après validation par l'administrateur.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">💸 Retraits</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Seul le <strong style="color:var(--text);">solde retrait</strong> est retirable. Il est alimenté par vos retours d'investissement et commissions. Des frais de <strong style="color:var(--orange);">5%</strong> sont appliqués sur chaque retrait.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🤝 Parrainage</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    En parrainant un ami avec votre lien unique :<br>
+    • Vous recevez <strong style="color:var(--gold);">+1 tour de roue</strong> à son inscription<br>
+    • Vous recevez <strong style="color:var(--green);">+1 000 FCFA</strong> dès son premier dépôt<br>
+    • Vous percevez des commissions sur ses retours d'investissement :<br>
+    &nbsp;&nbsp;— Niveau 1 (filleul direct) : <strong>7%</strong><br>
+    &nbsp;&nbsp;— Niveau 2 : <strong>5%</strong><br>
+    &nbsp;&nbsp;— Niveau 3 : <strong>3%</strong>
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎰 Roue de la Fortune</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Chaque filleul inscrit vous donne droit à <strong style="color:var(--text);">1 tour de roue</strong>. Les gains de la roue sont crédités sur votre solde retrait.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🔒 Sécurité</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Votre mot de passe est chiffré avant stockage. Ne partagez jamais vos identifiants. InvestPro ne vous demandera jamais votre mot de passe par message.
+  </div>
+</div>
+
+<div class="pay-card">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">⚠️ Avertissement</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Tout investissement comporte des risques. Les retours affichés sont indicatifs et dépendent du bon fonctionnement de la plateforme. L'administrateur se réserve le droit de modifier les conditions à tout moment.
+  </div>
+</div>
+
 </div>
 
 <div class="page" id="page-profile">
@@ -713,8 +790,11 @@ var refInput=document.getElementById('rRef')?document.getElementById('rRef').val
 var refBy=refInput||params.get('ref')||window._refFromUrl||'';
 var refCode='INV-'+Math.random().toString(36).substr(2,6).toUpperCase();
   var nu={id:Date.now().toString(),name:name,email:email,phone:phone,pass:pw,joinedAt:new Date().toISOString(),refBy:refBy,refCode:refCode,depositBalance:0,withdrawBalance:0,totalEarned:0,activeVip:0,activeInvestments:[],transactions:[],pendingActivReturns:[],pendingReturns:[],spinTurns:0,spinEarned:0,refCount:0};
-db.users.push(nu);
-if(refBy){
+// Bonus d'inscription: 2000 FCFA sur solde dépôt
+  nu.depositBalance=2000;
+  nu.transactions.unshift({type:'bonus',label:"Bonus d'inscription — 2 000 FCFA offerts",amount:2000,status:'done',date:new Date().toISOString()});
+  db.users.push(nu);
+  if(refBy){
     // Logique propre: chercher le parrain et créditer 1 tour
     var parrain=null;
     for(var j=0;j<db.users.length;j++){
@@ -768,7 +848,11 @@ if(db){
 var u=db.users.find(function(x){return x.email===CU.email;});
 if(u){CU=u;sessionStorage.setItem('cu',JSON.stringify(CU));}
 }
-S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0; S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
+S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
+  // Afficher notification bonus si nouveau compte
+  if(S.depositBalance===2000 && (CU.transactions||[]).length<=1 && !sessionStorage.getItem('bonusShown')){
+    setTimeout(function(){ toast('🎁 Bienvenue ! 2 000 FCFA offerts sur votre solde dépôt !'); sessionStorage.setItem('bonusShown','1'); },1500);
+  } S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
 S.activeInvestments=(CU.activeInvestments||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
 S.transactions=CU.transactions||[];
 S.pendingActivReturns=(CU.pendingActivReturns||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
@@ -1264,7 +1348,18 @@ var dep=db.deposits.find(function(d){return d.id===id;});
 if(!dep)return db;
 dep.status='approved';
 var u=db.users.find(function(x){return x.email===dep.userEmail;});
-if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Dépôt approuvé '+dep.operator,amount:dep.amount,status:'done',date:new Date().toISOString()});}
+if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Dépôt approuvé '+dep.operator,amount:dep.amount,status:'done',date:new Date().toISOString()});
+      // Bonus 1000 FCFA au parrain si c'est le 1er dépôt approuvé du filleul
+      var approvedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===dep.userEmail&&d.status==='approved';});
+      if(approvedDeps.length===1&&u.refBy){
+        var parrain=db.users.find(function(x){return x.refCode===u.refBy||x.email===u.refBy;});
+        if(parrain){
+          parrain.withdrawBalance=(parrain.withdrawBalance||0)+1000;
+          parrain.totalEarned=(parrain.totalEarned||0)+1000;
+          parrain.transactions=parrain.transactions||[];
+          parrain.transactions.unshift({type:'referral_bonus',label:'Bonus parrainage — '+u.name+' a fait son 1er dépôt',amount:1000,status:'done',date:new Date().toISOString()});
+        }
+      }}
 return db;
 });
 showSpinner(false);
@@ -1701,7 +1796,7 @@ var _tt;
 function toast(m,t){var e=document.getElementById('toast');document.getElementById('toastMsg').textContent=m;e.className='toast '+(t||'ok')+' show';clearTimeout(_tt);_tt=setTimeout(function(){e.classList.remove('show');},3500);}
 
 // ── NAVIGATION ──
-var PAGES=['dashboard','invest','deposit','withdraw','history','share','profile','admin'];
+var PAGES=['dashboard','invest','deposit','withdraw','history','share','cgu','profile','admin'];
 function goPage(n){
 document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
 document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
