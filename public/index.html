@@ -464,9 +464,10 @@ initEmailJS();
 </div>
 
 <div class="pay-card">
-  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">⚠️ Avertissement</div>
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-    Tout investissement comporte des risques. Les retours affichés sont indicatifs et dépendent du bon fonctionnement de la plateforme. L'administrateur se réserve le droit de modifier les conditions à tout moment.
+    À l'inscription, vous recevez <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde retrait</strong>.<br><br>
+    Ce bonus ne peut <strong style="color:var(--orange);">pas être utilisé pour investir</strong>. Il est disponible uniquement au retrait, dès que votre filleul effectue son premier dépôt approuvé.
   </div>
 </div>
 
@@ -749,14 +750,21 @@ if(inp.toLowerCase()==='quentin'&&pw==='Quentin'){
 CU={id:'admin',name:'Quentin',email:'admin@investpro',isAdmin:true,joinedAt:new Date().toISOString()};
 sessionStorage.setItem('cu',JSON.stringify(CU));enterApp();return;
 }
+var rawPw=pw;
 pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
 showSpinner(false);
 if(!db){authErr('Connexion JSONBin échouée. Vérifiez votre connexion internet et que le fichier est servi via un serveur HTTP.');return;}
 if(!db.siteOpen){authErr('Le site est temporairement fermé.');return;}
+// Compatibilité: accepter hash SHA-256 ET mot de passe en clair (anciens comptes)
 var u=null;
-for(var i=0;i<db.users.length;i++){if(db.users[i].email===inp.toLowerCase()&&db.users[i].pass===pw){u=db.users[i];break;}}
+for(var i=0;i<db.users.length;i++){
+  var usr=db.users[i];
+  if(usr.email===inp.toLowerCase()&&(usr.pass===pw||usr.pass===rawPw)){
+    u=usr;break;
+  }
+}
 if(!u){authErr('Email ou mot de passe incorrect.');return;}
 // Always take fresh data from DB
 CU=Object.assign({},u);
@@ -779,6 +787,7 @@ if(!phone||phone.length<8){authErr('Numéro invalide.');return;}
 if(!/^[A-Z]/.test(pw)){authErr('Le mot de passe doit commencer par une majuscule.');return;}
 if(pw.length<6){authErr('Mot de passe trop court (6 car. min).');return;}
 if(pw!==pw2){authErr('Mots de passe différents.');return;}
+var rawPw=pw;
 pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
@@ -790,8 +799,8 @@ var refInput=document.getElementById('rRef')?document.getElementById('rRef').val
 var refBy=refInput||params.get('ref')||window._refFromUrl||'';
 var refCode='INV-'+Math.random().toString(36).substr(2,6).toUpperCase();
   var nu={id:Date.now().toString(),name:name,email:email,phone:phone,pass:pw,joinedAt:new Date().toISOString(),refBy:refBy,refCode:refCode,depositBalance:0,withdrawBalance:0,totalEarned:0,activeVip:0,activeInvestments:[],transactions:[],pendingActivReturns:[],pendingReturns:[],spinTurns:0,spinEarned:0,refCount:0};
-// Bonus d'inscription: 2000 FCFA sur solde dépôt
-  nu.depositBalance=2000;
+// Bonus d'inscription: 2000 FCFA sur solde RETRAIT (non utilisable pour investir)
+  nu.withdrawBalance=2000;
   nu.transactions.unshift({type:'bonus',label:"Bonus d'inscription — 2 000 FCFA offerts",amount:2000,status:'done',date:new Date().toISOString()});
   db.users.push(nu);
   if(refBy){
@@ -850,8 +859,8 @@ if(u){CU=u;sessionStorage.setItem('cu',JSON.stringify(CU));}
 }
 S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
   // Afficher notification bonus si nouveau compte
-  if(S.depositBalance===2000 && (CU.transactions||[]).length<=1 && !sessionStorage.getItem('bonusShown')){
-    setTimeout(function(){ toast('🎁 Bienvenue ! 2 000 FCFA offerts sur votre solde dépôt !'); sessionStorage.setItem('bonusShown','1'); },1500);
+  if(S.withdrawBalance===2000 && (CU.transactions||[]).length<=1 && !sessionStorage.getItem('bonusShown')){
+    setTimeout(function(){ toast('🎁 Bienvenue ! 2 000 FCFA offerts sur votre solde retrait !'); sessionStorage.setItem('bonusShown','1'); },1500);
   } S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
 S.activeInvestments=(CU.activeInvestments||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
 S.transactions=CU.transactions||[];
