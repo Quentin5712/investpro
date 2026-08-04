@@ -197,8 +197,8 @@ initEmailJS();
 <div style="text-align:center;font-size:11px;color:#7A7F96;margin-top:12px;">Pas de compte ? <a href="#" onclick="goRegister();return false;" style="color:#F4A800;text-decoration:none;">S'inscrire</a></div>
 </div>
 <div id="pReg" style="display:none;">
-<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Nom complet</div><input id="rName" type="text" placeholder="Jean Dupont" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
-<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Email</div><input id="rEmail" type="email" placeholder="jean@email.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
+<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Nom complet</div><input id="rName" type="text" placeholder="Nom complet" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
+<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Email</div><input id="rEmail" type="email" placeholder="Adresse email" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Téléphone</div><input id="rPhone" type="tel" placeholder="655 123 456" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Mot de passe</div><input id="rPass" type="password" placeholder="Min 6 caractères" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:12px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Confirmer</div><input id="rPass2" type="password" placeholder="Répéter" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
@@ -418,7 +418,7 @@ initEmailJS();
   <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">💰 Plans VIP</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
     <strong style="color:var(--text);">Partie 1 — Activation :</strong> Activez un niveau VIP avec un montant fixe. Vous recevrez un retour ×100 après la durée d'échéance (90 à 120 jours selon le niveau).<br><br>
-    <strong style="color:var(--text);">Partie 2 — Investissement :</strong> Investissez sur votre niveau VIP débloqué (maximum 2 fois par niveau). Vous recevrez un retour majoré après la durée indiquée.
+    <strong style="color:var(--text);">Partie 2 — Investissement :</strong> Investissez sur votre niveau VIP débloqué. Vous recevrez un retour majoré après la durée indiquée.
   </div>
 </div>
 
@@ -965,7 +965,7 @@ ag.appendChild(ac);
 var ic=document.createElement('div'); ic.className='vip-card';
 var dr=(p.rate/p.days*100).toFixed(1);
 var dailyProfit=Math.floor(profit/p.days);
-ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(alreadyInv?'<button class="vip-btn" style="background:rgba(244,168,0,0.12);color:var(--gold);" disabled>⏳ Investissement en cours</button>':(((S.usedVipInvestments||[]).filter(function(x){return x===p.id;}).length>=2)?'<button class="vip-btn" style="background:rgba(122,127,150,0.15);color:var(--muted);" disabled>&#10003; Max 2 investissements atteints</button>':(S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
+ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(alreadyInv?'<button class="vip-btn" style="background:rgba(244,168,0,0.12);color:var(--gold);" disabled>⏳ Investissement en cours</button>':(((S.usedVipInvestments||[]).filter(function(x){return x===p.id;}).length>=2)?'<button class="vip-btn" style="background:rgba(244,168,0,0.1);color:var(--gold);border:1px solid rgba(244,168,0,0.3);" onclick="showActivModal('+p.id+')">🔄 Réactiver pour investir à nouveau</button>':(S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
 ig.appendChild(ic);
 });
 }
@@ -1034,6 +1034,50 @@ toast('💰 '+r.returnAmt.toLocaleString()+' FCFA (80%) récupérés !');
 }
 
 var CP=null;
+// Afficher modal d'activation VIP (réactivation)
+function showActivModal(id){
+  CP=VIP_PLANS.find(function(x){return x.id===id;});
+  if(!CP)return;
+  // Montrer le modal d'activation (partie 1)
+  var modal=document.getElementById('activModal');
+  if(modal){
+    modal.style.display='flex';
+    var mTitle=document.getElementById('activTitle');
+    var mInfo=document.getElementById('activInfo');
+    if(mTitle) mTitle.textContent=CP.emoji+' Réactiver '+CP.name;
+    if(mInfo) mInfo.textContent='Réactivez ce niveau pour débloquer 2 nouveaux investissements. Coût: '+CP.activAmt.toLocaleString()+' FCFA';
+  } else {
+    // Fallback: utiliser confirm
+    if(confirm('Réactiver '+CP.name+' pour '+CP.activAmt.toLocaleString()+' FCFA ?\nCela débloquera 2 nouveaux investissements.')){
+      doActivation();
+    }
+  }
+}
+
+function doActivation(){
+  if(!CP) return;
+  if((S.depositBalance||0)<CP.activAmt){
+    toast('Solde dépôt insuffisant. Requis: '+CP.activAmt.toLocaleString()+' FCFA','err');return;
+  }
+  // Déduire du solde dépôt
+  S.depositBalance=(S.depositBalance||0)-CP.activAmt;
+  // Réinitialiser compteur investissements pour ce VIP
+  S.usedVipInvestments=(S.usedVipInvestments||[]).filter(function(x){return x!==CP.id;});
+  // Mettre à jour activeVip
+  if(CP.id > S.activeVip) S.activeVip=CP.id;
+  // Enregistrer retour activation dans pendingActivReturns
+  var rd=new Date();rd.setDate(rd.getDate()+CP.activDays);
+  S.pendingActivReturns=S.pendingActivReturns||[];
+  S.pendingActivReturns.push({
+    vipId:CP.id, vipName:CP.name, amount:CP.activAmt,
+    returnAmt:CP.activAmt*CP.activReturn,
+    returnDate:rd.toISOString(), days:CP.activDays, color:CP.color, emoji:CP.emoji
+  });
+  addTx({type:'activ',label:'Réactivation '+CP.name+' — '+CP.activAmt.toLocaleString()+' FCFA',amount:-CP.activAmt,status:'done'});
+  saveUserState(); updateUI(); renderVip();
+  toast('✅ '+CP.name+' réactivé ! 2 nouveaux investissements débloqués.');
+}
+
 function openModal(id){
 CP=VIP_PLANS.find(function(x){return x.id===id;});
 if(!CP)return;
@@ -1056,7 +1100,9 @@ if(S.activeInvestments.some(function(x){return x.vipId===CP.id;})){
 }
 var vipCount=(S.usedVipInvestments||[]).filter(function(x){return x===CP.id;}).length;
 if(vipCount>=2){
-  toast(CP.name+' : maximum 2 investissements par niveau atteint.','err');return;
+  toast(CP.name+' : 2 investissements atteints. Réactivez le VIP pour continuer.','err');
+  showActivModal(CP.id);
+  return;
 }
 
 // Deduct exactly investAmt
