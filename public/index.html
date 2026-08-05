@@ -725,7 +725,7 @@ function esc(str){
     .replace(/'/g,'&#039;');
 }
 
-var S  = { depositBalance:0, withdrawBalance:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
+var S  = { depositBalance:0, withdrawBalance:0, bonusLocked:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
 {id:1,name:'VIP 1',color:'#64B5F6',emoji:'⭐',activAmt:2000, activReturn:100,activDays:120, investAmt:2000, rate:0.50,days:3},
@@ -799,9 +799,9 @@ var refInput=document.getElementById('rRef')?document.getElementById('rRef').val
 var refBy=refInput||params.get('ref')||window._refFromUrl||'';
 var refCode='INV-'+Math.random().toString(36).substr(2,6).toUpperCase();
   var nu={id:Date.now().toString(),name:name,email:email,phone:phone,pass:pw,joinedAt:new Date().toISOString(),refBy:refBy,refCode:refCode,depositBalance:0,withdrawBalance:0,totalEarned:0,activeVip:0,activeInvestments:[],transactions:[],pendingActivReturns:[],pendingReturns:[],spinTurns:0,spinEarned:0,refCount:0};
-// Bonus d'inscription: 2000 FCFA sur solde RETRAIT (non utilisable pour investir)
-  nu.withdrawBalance=2000;
-  nu.transactions.unshift({type:'bonus',label:"Bonus d'inscription — 2 000 FCFA offerts",amount:2000,status:'done',date:new Date().toISOString()});
+// Bonus 2000 FCFA: bloqué jusqu'au 1er dépôt d'un filleul
+  nu.bonusLocked=2000;
+  nu.transactions.unshift({type:'bonus',label:"Bonus d'inscription — 2 000 FCFA (bloqué jusqu'au 1er filleul déposant)",amount:2000,status:'locked',date:new Date().toISOString()});
   db.users.push(nu);
   if(refBy){
     // Logique propre: chercher le parrain et créditer 1 tour
@@ -869,6 +869,7 @@ S.spinTurns=CU.spinTurns||0;
 S.spinEarned=CU.spinEarned||0;
 S.refCount=CU.refCount||0;
 S.usedVipInvestments=CU.usedVipInvestments||[];
+  S.bonusLocked=CU.bonusLocked||0;
 }
 var ini=CU.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
 document.getElementById('avInit').textContent=ini;
@@ -933,7 +934,7 @@ async function syncUserData(){
 
 async function saveUserState(){
 if(!CU||CU.isAdmin)return;
-var userData=Object.assign({},S,{email:CU.email,name:CU.name,phone:CU.phone,pass:CU.pass,joinedAt:CU.joinedAt,id:CU.id,refBy:CU.refBy||'',refCode:CU.refCode||'',depositBalance:S.depositBalance||0,withdrawBalance:S.withdrawBalance||0,usedVipInvestments:S.usedVipInvestments||[],pendingActivReturns:S.pendingActivReturns||[],spinTurns:S.spinTurns||0,spinEarned:S.spinEarned||0,refCount:S.refCount||0});
+var userData=Object.assign({},S,{email:CU.email,name:CU.name,phone:CU.phone,pass:CU.pass,joinedAt:CU.joinedAt,id:CU.id,refBy:CU.refBy||'',refCode:CU.refCode||'',depositBalance:S.depositBalance||0,withdrawBalance:S.withdrawBalance||0,bonusLocked:S.bonusLocked||0,usedVipInvestments:S.usedVipInvestments||[],pendingActivReturns:S.pendingActivReturns||[],spinTurns:S.spinTurns||0,spinEarned:S.spinEarned||0,refCount:S.refCount||0});
 await dbUpdate(function(db){
 var idx=db.users.findIndex(function(u){return u.email===CU.email;});
 if(idx>=0)db.users[idx]=userData;
@@ -1282,6 +1283,9 @@ var a=parseInt(document.getElementById('wdAmt').value);
 if(!wdOp){toast('Choisissez un opérateur','err');return;}
 if(!ph||ph.length<8){toast('Numéro invalide','err');return;}
 if(!a||a<2000){toast('Minimum 2 000 FCFA','err');return;}
+  if((S.bonusLocked||0)>0 && a>(S.withdrawBalance||0)-(S.bonusLocked||0)){
+    toast('Bonus d\'inscription bloqué ('+S.bonusLocked.toLocaleString()+' FCFA). Parrainez un ami qui dépose pour débloquer.','err');return;
+  }
 if(a>S.withdrawBalance){toast('Solde retrait insuffisant. Disponible: '+S.withdrawBalance.toLocaleString()+' FCFA','err');return;}
 var frais=Math.ceil(a*0.05);
 var netAmount=a-frais;
@@ -1409,10 +1413,19 @@ if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transac
       if(approvedDeps.length===1&&u.refBy){
         var parrain=db.users.find(function(x){return x.refCode===u.refBy||x.email===u.refBy;});
         if(parrain){
+          // Débloquer le bonus de parrainage (1000 FCFA) vers withdrawBalance
           parrain.withdrawBalance=(parrain.withdrawBalance||0)+1000;
           parrain.totalEarned=(parrain.totalEarned||0)+1000;
+          // Débloquer aussi le bonus d'inscription (2000 FCFA) si encore bloqué
+          if((parrain.bonusLocked||0)>0){
+            parrain.withdrawBalance=(parrain.withdrawBalance||0)+(parrain.bonusLocked||0);
+            parrain.totalEarned=(parrain.totalEarned||0)+(parrain.bonusLocked||0);
+            parrain.transactions=parrain.transactions||[];
+            parrain.transactions.unshift({type:'bonus_unlocked',label:'Bonus d\'inscription débloqué — 2 000 FCFA disponibles',amount:parrain.bonusLocked,status:'done',date:new Date().toISOString()});
+            parrain.bonusLocked=0;
+          }
           parrain.transactions=parrain.transactions||[];
-          parrain.transactions.unshift({type:'referral_bonus',label:'Bonus parrainage — '+u.name+' a fait son 1er dépôt',amount:1000,status:'done',date:new Date().toISOString()});
+          parrain.transactions.unshift({type:'referral_bonus',label:'Bonus parrainage — '+u.name+' a fait son 1er dépôt — +1 000 FCFA',amount:1000,status:'done',date:new Date().toISOString()});
         }
       }}
 return db;
@@ -1844,6 +1857,17 @@ function updateUI(){
   // Mettre à jour tours si page share visible
   var sp=document.getElementById('page-share');
   if(sp&&sp.classList.contains('active'))updateSharePage();
+  // Afficher info bonus bloqué sur page retrait
+  var bli=document.getElementById('bonusLockedInfo');
+  var bla=document.getElementById('bonusLockedAmt');
+  if(bli&&bla){
+    if((S.bonusLocked||0)>0){
+      bli.style.display='block';
+      bla.textContent=(S.bonusLocked||0).toLocaleString();
+    } else {
+      bli.style.display='none';
+    }
+  }
 }
 
 // ── TOAST ──
