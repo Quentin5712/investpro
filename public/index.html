@@ -181,7 +181,7 @@ initEmailJS();
   <div id="loadMsg" style="color:#4A4F66;font-size:11px;margin-top:12px;">Connexion à la base de données...</div>
 </div>
 
-<div id="authWrap" style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#0A0C10,#12151C,#0A0C10);">
+<div id="authWrap" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--dark,#0A0C10);overflow-y:auto;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#0A0C10,#12151C,#0A0C10);">
 <div style="background:#1E2232;border:1px solid rgba(244,168,0,0.2);border-radius:20px;padding:30px 24px;width:100%;max-width:390px;box-shadow:0 30px 60px rgba(0,0,0,0.5);">
 <div style="font-family:system-ui,sans-serif;font-size:22px;font-weight:800;text-align:center;margin-bottom:3px;">Invest<span style="color:#F4A800;">Pro</span></div>
 <div style="text-align:center;color:#7A7F96;font-size:12px;margin-bottom:20px;">Plateforme d'investissement</div>
@@ -209,7 +209,7 @@ initEmailJS();
 </div>
 </div>
 
-<div id="appWrap" style="display:none;">
+<div id="appWrap" style="display:none;position:relative;z-index:1;">
 <nav>
 <div style="display:flex;align-items:center;gap:8px;">
 <div class="logo">Invest<span>Pro</span></div>
@@ -737,11 +737,11 @@ function esc(str){
 var S  = { depositBalance:0, withdrawBalance:0, bonusLocked:0, dailyEarnings:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
-{id:1,name:'VIP 1',color:'#64B5F6',emoji:'⭐', activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, minWithdraw:2000},
-{id:2,name:'VIP 2',color:'#81C784',emoji:'🌟', activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:2, minWithdraw:5000},
-{id:3,name:'VIP 3',color:'#FFD54F',emoji:'💫', activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:3, minWithdraw:10000},
-{id:4,name:'VIP 4',color:'#FF8A65',emoji:'🔥', activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:4, minWithdraw:20000},
-{id:5,name:'VIP 5',color:'#CE93D8',emoji:'👑', activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:5, minWithdraw:50000},
+{id:1,name:'VIP 1',color:'#64B5F6',emoji:'⭐', activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, dailyDenom:5, minWithdraw:2000},
+{id:2,name:'VIP 2',color:'#81C784',emoji:'🌟', activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:1, dailyDenom:5, minWithdraw:5000},
+{id:3,name:'VIP 3',color:'#FFD54F',emoji:'💫', activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:1, dailyDenom:5, minWithdraw:10000},
+{id:4,name:'VIP 4',color:'#FF8A65',emoji:'🔥', activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:1, dailyDenom:5, minWithdraw:20000},
+{id:5,name:'VIP 5',color:'#CE93D8',emoji:'👑', activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:1, dailyDenom:5, minWithdraw:50000},
 ];
 // Rules:
 // - activAmt: paid ONCE to unlock the VIP level (not refunded, like a subscription)
@@ -1329,7 +1329,12 @@ var netAmount=a-frais;
 if(!confirm('Retrait: '+a.toLocaleString()+' FCFA\nFrais (5%): -'+frais.toLocaleString()+' FCFA\nVous recevrez: '+netAmount.toLocaleString()+' FCFA\n\nConfirmer ?'))return;
 var op=wdOp==='mtn'?'MTN MoMo':'Orange Money';
 var wid=Date.now().toString();
-var wd={id:wid,userEmail:CU.email,userName:CU.name,userTel:ph,amount:a,frais:frais||Math.ceil(a*0.05),netAmount:netAmount||(a-Math.ceil(a*0.05)),operator:op,date:new Date().toISOString(),status:'pending'};
+var txs=CU.transactions||[];
+var wdSource='gains';
+if(txs.some(function(t){return t.type==='bonus_unlocked'||t.type==='referral_bonus';})&&txs.some(function(t){return t.type==='daily_gain';})) wdSource='mixte';
+else if(txs.some(function(t){return t.type==='bonus_unlocked'||t.type==='referral_bonus';})) wdSource='bonus';
+else if(txs.some(function(t){return t.type==='daily_gain';})) wdSource='gains_journaliers';
+var wd={id:wid,userEmail:CU.email,userName:CU.name,userTel:ph,amount:a,frais:frais||Math.ceil(a*0.05),netAmount:netAmount||(a-Math.ceil(a*0.05)),operator:op,date:new Date().toISOString(),status:'pending',wdSource:wdSource};
 await dbUpdate(function(db){db.withdrawals=db.withdrawals||[];db.withdrawals.push(wd);db.notifications=db.notifications||[];db.notifications.unshift({type:'withdraw',id:wid,userName:CU.name,userEmail:CU.email,userTel:ph,amount:a,operator:op,date:wd.date,read:false});return db;});
 addTx({type:'withdraw',label:'Retrait '+op,amount:-a,status:'pending',wid:wid,phone:ph});
 updateUI();
@@ -1461,7 +1466,7 @@ return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;
 // Pending withdrawals
 var pWds=wds.filter(function(w){return w.status==='pending';});
 document.getElementById('pwdList').innerHTML=pWds.length?pWds.map(function(w){
-return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+esc(w.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+esc(w.userName)+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\',(w.netAmount||Math.round(w.amount*0.95)))">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
+return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+esc(w.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA'+(w.wdSource?'<br><small style="font-weight:700;color:'+(w.wdSource==='bonus'?'#CE93D8':w.wdSource==='gains_journaliers'?'var(--gold)':w.wdSource==='mixte'?'var(--orange)':'var(--muted)')+'">'+(w.wdSource==='bonus'?'🎁 Bonus':w.wdSource==='gains_journaliers'?'📈 Gains journaliers':w.wdSource==='mixte'?'🔀 Bonus+Gains':'💰 Gains')+'</small>':'')+'</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+esc(w.userName)+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\',(w.netAmount||Math.round(w.amount*0.95)))">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
 }).join(''):'<div class="empty">Aucun retrait en attente.</div>';
 // Withdrawal history
 document.getElementById('wdHist').innerHTML=wds.filter(function(w){return w.status!=='pending';}).slice(0,12).map(function(w){
