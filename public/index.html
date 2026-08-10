@@ -410,7 +410,8 @@ initEmailJS();
 <div class="pay-card" style="margin-bottom:12px;">
   <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-    Tout nouveau compte reçoit <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur le solde dépôt à l'inscription. Ce bonus peut être utilisé pour activer un plan VIP ou investir.
+    Lors de votre <strong style="color:var(--text);">premier dépôt approuvé d'au moins 4 000 FCFA</strong>, vous recevez automatiquement <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde dépôt</strong>.<br><br>
+    Ce bonus peut être utilisé pour investir ou activer un niveau VIP.
   </div>
 </div>
 
@@ -441,7 +442,7 @@ initEmailJS();
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
     En parrainant un ami avec votre lien unique :<br>
     • Vous recevez <strong style="color:var(--gold);">+1 tour de roue</strong> à son inscription<br>
-    • Vous recevez <strong style="color:var(--green);">+500 FCFA</strong> dès son premier dépôt (débloqué après 2 filleuls déposants)<br>
+    • Vous recevez <strong style="color:var(--green);">+1 000 FCFA</strong> lorsque <strong>2 de vos filleuls</strong> ont chacun effectué leur premier dépôt<br>
     • Vous percevez des commissions sur ses retours d'investissement :<br>
     &nbsp;&nbsp;— Niveau 1 (filleul direct) : <strong>7%</strong><br>
     &nbsp;&nbsp;— Niveau 2 : <strong>5%</strong><br>
@@ -1912,25 +1913,9 @@ async function loadFilleuls(){
     return u.refBy===myCode||u.refBy===CU.email;
   });
 
-  // ── Synchroniser spinTurns avec le vrai nombre de filleuls ──
-  // Chaque filleul inscrit = 1 tour de roue garanti
-  var realSpinTurns=filleuls.length;
-
-  // Si spinTurns en DB est différent du nombre réel de filleuls -> corriger
-  var dbUser=db.users.find(function(u){return u.email===CU.email;});
-  if(dbUser && (dbUser.spinTurns||0) !== realSpinTurns){
-    // Mettre à jour en DB (correction silencieuse)
-    await dbUpdate(function(db){
-      var u=db.users.find(function(x){return x.email===CU.email;});
-      if(u) u.spinTurns=realSpinTurns;
-      return db;
-    });
-  }
-
-  // Mettre à jour S.spinTurns localement
-  S.spinTurns=realSpinTurns;
+  // spinTurns est géré par doRegister (+1) et spinWheel (-1)
+  // Ne pas l'écraser ici pour ne pas annuler les tours utilisés
   S.refCount=filleuls.length;
-  CU.spinTurns=realSpinTurns;
   CU.refCount=filleuls.length;
 
   // Mettre à jour l'affichage des tours
