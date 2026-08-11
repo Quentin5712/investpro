@@ -410,8 +410,8 @@ initEmailJS();
 <div class="pay-card" style="margin-bottom:12px;">
   <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-    Lors de votre <strong style="color:var(--text);">premier dépôt approuvé d'au moins 4 000 FCFA</strong>, vous recevez automatiquement <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde dépôt</strong>.<br><br>
-    Ce bonus peut être utilisé pour investir ou activer un niveau VIP.
+    Lors de votre <strong style="color:var(--text);">premier dépôt approuvé d'au moins 4 000 FCFA</strong>, vous recevez automatiquement <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde retrait</strong>.<br><br>
+    Ce bonus est <strong style="color:var(--orange);">retirable uniquement</strong> — il ne peut pas être utilisé pour investir.
   </div>
 </div>
 
@@ -986,7 +986,7 @@ ag.appendChild(ac);
 var ic=document.createElement('div'); ic.className='vip-card';
 var dr=(p.rate/p.days*100).toFixed(1);
 var dailyProfit=Math.floor(profit/p.days);
-ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(alreadyInv?'<button class="vip-btn" style="background:rgba(244,168,0,0.12);color:var(--gold);" disabled>⏳ Investissement en cours</button>':(((S.usedVipInvestments||[]).filter(function(x){return x===p.id;}).length>=2)?'<button class="vip-btn" style="background:rgba(244,168,0,0.1);color:var(--gold);border:1px solid rgba(244,168,0,0.3);" onclick="showActivModal('+p.id+')">🔄 Réactiver pour investir à nouveau</button>':(S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
+ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(alreadyInv?'<button class="vip-btn" style="background:rgba(244,168,0,0.12);color:var(--gold);" disabled>⏳ Investissement en cours</button>':((S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
 ig.appendChild(ic);
 });
 }
@@ -1123,11 +1123,7 @@ function confirmInvest(){
   if(S.activeInvestments.some(function(x){return x.vipId===CP.id;})){
     toast('Investissement '+CP.name+' déjà en cours','err');return;
   }
-  var vipCount=(S.usedVipInvestments||[]).filter(function(x){return x===CP.id;}).length;
-  if(vipCount>=2){
-    toast(CP.name+' : 2 investissements atteints. Réactivez le VIP pour continuer.','err');
-    showActivModal(CP.id);return;
-  }
+
 
 // Deduct exactly investAmt
 S.depositBalance=(S.depositBalance||0)-CP.investAmt;
@@ -1146,8 +1142,7 @@ var rd = new Date(Date.now() + CP.days * 86400000);
     lastClaimDate: new Date().toISOString(),
     color: CP.color, emoji: CP.emoji, active: true
   });
-  if(!S.usedVipInvestments)S.usedVipInvestments=[];
-  S.usedVipInvestments.push(CP.id); // compte les investissements par VIP
+   // compte les investissements par VIP
 addTx({type:'invest', label:'Investissement '+CP.name+' ('+CP.investAmt.toLocaleString()+' FCFA)', amount:-CP.investAmt, status:'active', vipId:CP.id});
 saveUserState(); closeModal(); updateUI(); renderVip();
 toast('✅ '+CP.name+' lancé ! Capital + profit récupérables dans '+CP.days+' jours.');
@@ -1511,10 +1506,10 @@ if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transac
       // Bonus inscription: 2000 FCFA si 1er dépôt >= 4000 FCFA
       var userApprovedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===dep.userEmail&&d.status==='approved';});
       if(userApprovedDeps.length===1 && dep.amount>=4000 && (u.bonusInscriptionGiven!==true)){
-        u.depositBalance=(u.depositBalance||0)+2000;
+        u.withdrawBalance=(u.withdrawBalance||0)+2000;
         u.totalEarned=(u.totalEarned||0)+2000;
         u.bonusInscriptionGiven=true;
-        u.transactions.unshift({type:'bonus',label:'Bonus d\'inscription — 2 000 FCFA (1er dépôt validé)',amount:2000,status:'done',date:new Date().toISOString()});
+        u.transactions.unshift({type:'bonus',label:'Bonus d\'inscription — 2 000 FCFA (retirable, non investissable)',amount:2000,status:'done',date:new Date().toISOString()});
       }
       // Bonus 1000 FCFA au parrain si c'est le 1er dépôt approuvé du filleul
       var approvedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===dep.userEmail&&d.status==='approved';});
