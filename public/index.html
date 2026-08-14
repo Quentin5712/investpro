@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvestPro</title>
+<title>Green Pepper</title>
 
 <style>
 :root{
 --font-head: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
---font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#F4A800;--dark:#0A0C10;--dark2:#12151C;--card:#1E2232;--border:rgba(244,168,0,0.15);--text:#E8EAF0;--muted:#7A7F96;--green:#00C896;--orange:#FF6B35;--red:#FF4D4D;--mtn:#FFCD00;--om:#FF6600;}
+--font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#C8A951;--dark:#0D1A0F;--dark2:#132016;--card:#1A2E1E;--border:rgba(200,169,81,0.2);--text:#E8EAF0;--muted:#7A9980;--green:#2D7D46;--orange:#E85D26;--red:#C0392B;--mtn:#FFCD00;--om:#FF6600;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--dark);color:var(--text);font-family:var(--font-body);min-height:100vh;}
 nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(10,12,16,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
@@ -172,7 +172,7 @@ initEmailJS();
 </head>
 <body>
 <!-- INSTANT LOADING SCREEN -->
-<div id="loadScreen" style="position:fixed;inset:0;background:#0A0C10;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
+<div id="loadScreen" style="position:fixed;inset:0;background:#0D1A0F;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
   <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:#E8EAF0;margin-bottom:8px;">Invest<span style="color:#F4A800;">Pro</span></div>
   <div style="color:#7A7F96;font-size:13px;margin-bottom:28px;">Chargement en cours...</div>
   <div style="width:180px;height:3px;background:#1E2232;border-radius:2px;overflow:hidden;">
@@ -240,7 +240,7 @@ initEmailJS();
 </div>
 
 <div class="page active" id="page-dashboard">
-<div class="sec-label">Vue d'ensemble</div><div class="sec-title">Mon Portefeuille</div>
+<div class="sec-label">Vue d'ensemble</div><div class="sec-title">Mon Investissement 🌶️</div>
 <div class="grid">
 <div class="card" style="border-color:rgba(244,168,0,0.3);"><div class="card-lbl">💳 Solde dépôt</div><div class="card-val gold" id="sDepBal">0 FCFA</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">Pour investir & activer VIP</div></div>
 <div class="card" style="border-color:rgba(0,200,150,0.3);"><div class="card-lbl">💸 Solde retrait</div><div class="card-val green" id="sWdBal">0 FCFA</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">Retirable</div></div>
@@ -403,7 +403,7 @@ initEmailJS();
 <div class="pay-card" style="margin-bottom:12px;">
   <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">📋 Présentation</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-    InvestPro est une plateforme d'investissement mobile permettant aux utilisateurs de faire fructifier leur argent via des plans VIP. En vous inscrivant, vous acceptez les présentes conditions.
+    Green Pepper est une plateforme d'investissement mobile permettant aux utilisateurs de faire fructifier leur argent via des plans VIP. En vous inscrivant, vous acceptez les présentes conditions.
   </div>
 </div>
 
@@ -460,7 +460,7 @@ initEmailJS();
 <div class="pay-card" style="margin-bottom:12px;">
   <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🔒 Sécurité</div>
   <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-    Votre mot de passe est chiffré avant stockage. Ne partagez jamais vos identifiants. InvestPro ne vous demandera jamais votre mot de passe par message.
+    Votre mot de passe est chiffré avant stockage. Ne partagez jamais vos identifiants. Green Pepper ne vous demandera jamais votre mot de passe par message.
   </div>
 </div>
 
@@ -536,7 +536,7 @@ initEmailJS();
 <div id="a-dep"><div class="sec-label">En attente</div><div id="pendList"><div class="empty">Aucun.</div></div><div class="sep"></div><div class="sec-label">Historique</div><div id="depHist"></div></div>
 <div id="a-wd" style="display:none;"><div class="sec-label">À approuver</div><div id="pwdList"><div class="empty">Aucun.</div></div><div class="sep"></div><div class="sec-label">Historique</div><div id="wdHist"></div></div>
 <div id="a-users" style="display:none;"><div class="sec-label">Utilisateurs</div><div id="usersList"></div></div>
-<div id="a-inv" style="display:none;"><div class="sec-label">Investissements</div><div id="invList"></div></div>
+<div id="a-inv" style="display:none;"><div class="sec-label">Menu Green Pepper</div><div id="invList"></div></div>
 <div id="a-sms" style="display:none;">
 <div class="sec-label">Vérification Automatique SMS</div>
 <div style="background:rgba(0,200,150,0.05);border:1px solid rgba(0,200,150,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
@@ -715,7 +715,7 @@ function showAuth(){
   var ls=document.getElementById('loadScreen');
   if(ls){
     document.getElementById('loadBar').style.width='100%';
-    document.getElementById('loadMsg').textContent='Prêt !';
+    document.getElementById('loadMsg').textContent='Bienvenue chez Green Pepper 🌿';
     setTimeout(function(){ls.style.display='none';},300);
   }
   document.getElementById('authWrap').style.display='flex';
@@ -738,11 +738,26 @@ function esc(str){
 var S  = { depositBalance:0, withdrawBalance:0,  dailyEarnings:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
-{id:1,name:'VIP 1',color:'#64B5F6',emoji:'⭐', activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, dailyDenom:5, minWithdraw:2000},
-{id:2,name:'VIP 2',color:'#81C784',emoji:'🌟', activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:1, dailyDenom:5, minWithdraw:5000},
-{id:3,name:'VIP 3',color:'#FFD54F',emoji:'💫', activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:1, dailyDenom:5, minWithdraw:10000},
-{id:4,name:'VIP 4',color:'#FF8A65',emoji:'🔥', activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:1, dailyDenom:5, minWithdraw:20000},
-{id:5,name:'VIP 5',color:'#CE93D8',emoji:'👑', activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:1, dailyDenom:5, minWithdraw:50000},
+{id:1,name:'Pad Thaï',color:'#C8A951',emoji:'🍜',
+  dish:'Nouilles de riz sautées aux crevettes, œuf, germes de soja et cacahuètes grillées. Le plat emblématique de notre cuisine.',
+  stars:1,
+  activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, dailyDenom:5, minWithdraw:2000},
+{id:2,name:'Tom Kha',color:'#81C784',emoji:'🥥',
+  dish:'Soupe onctueuse à la noix de coco, galanga, citronnelle et champignons. Un équilibre parfait entre douceur et épices.',
+  stars:2,
+  activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:1, dailyDenom:5, minWithdraw:5000},
+{id:3,name:'Green Curry',color:'#2D7D46',emoji:'🍛',
+  dish:'Notre curry vert signature aux légumes frais, lait de coco et basilic thaï. La fierté du chef Green Pepper.',
+  stars:3,
+  activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:1, dailyDenom:5, minWithdraw:10000},
+{id:4,name:'Larb Gai',color:'#E85D26',emoji:'🌶️',
+  dish:'Salade épicée de poulet haché, menthe fraîche, piment grillé et jus de citron vert. Explosion de saveurs garantie.',
+  stars:4,
+  activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:1, dailyDenom:5, minWithdraw:20000},
+{id:5,name:'Massaman Royal',color:'#C8A951',emoji:'👑',
+  dish:'Le summum de notre carte : curry royal au bœuf fondant, pommes de terre, noix de cajou et cardamome. Un plat d\'exception réservé aux palais raffinés.',
+  stars:5,
+  activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:1, dailyDenom:5, minWithdraw:50000},
 ];
 // Rules:
 // - activAmt: paid ONCE to unlock the VIP level (not refunded, like a subscription)
@@ -757,7 +772,7 @@ var inp=document.getElementById('fEmail').value.trim();
 var pw=document.getElementById('fPass').value;
 if(!inp||!pw){authErr('Remplissez tous les champs.');return;}
 if(inp.toLowerCase()==='quentin'&&pw==='Quentin'){
-CU={id:'admin',name:'Quentin',email:'admin@investpro',isAdmin:true,joinedAt:new Date().toISOString()};
+CU={id:'admin',name:'Quentin',email:'admin@green-pepper',isAdmin:true,joinedAt:new Date().toISOString()};
 sessionStorage.setItem('cu',JSON.stringify(CU));enterApp();return;
 }
 var rawPw=pw;
@@ -981,7 +996,7 @@ var needMore=S.activeVip===p.id-1&&(S.depositBalance||0)<p.activAmt;
 var alreadyInv=S.activeInvestments.some(function(x){return x.vipId===p.id;});
 var profit=Math.floor(p.investAmt*p.rate), total=p.investAmt+profit;
 var ac=document.createElement('div'); ac.className='vip-card';
-ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
+ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+'<div style="font-size:12px;color:var(--gold);margin:4px 0 6px;letter-spacing:3px;">'+'★'.repeat(p.stars||1)+'☆'.repeat(5-(p.stars||1))+'</div>'+(p.dish?'<div style="font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;padding:6px 8px;background:rgba(200,169,81,0.05);border-radius:6px;border-left:2px solid var(--gold);margin-bottom:8px;">🍽️ '+p.dish+'</div>':'')+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
 ag.appendChild(ac);
 var ic=document.createElement('div'); ic.className='vip-card';
 var dr=(p.rate/p.days*100).toFixed(1);
@@ -1448,7 +1463,7 @@ document.getElementById('aInvC').textContent=ta;
 // Pending deposits
 var pDeps=deps.filter(function(d){return d.status==='pending';});
 document.getElementById('pendList').innerHTML=pDeps.length?pDeps.map(function(d){
-return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+esc(d.userName)+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0A0C10;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+esc(d.smsText)+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
+return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+esc(d.userName)+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0D1A0F;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+esc(d.smsText)+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
 }).join(''):'<div class="empty">Aucun dépôt en attente.</div>';
 // Deposit history
 document.getElementById('depHist').innerHTML=deps.filter(function(d){return d.status!=='pending';}).slice(0,12).map(function(d){
