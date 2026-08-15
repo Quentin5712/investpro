@@ -8,7 +8,7 @@
 <style>
 :root{
 --font-head: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
---font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#C8A951;--dark:#0D1A0F;--dark2:#132016;--card:#1A2E1E;--border:rgba(200,169,81,0.2);--text:#E8EAF0;--muted:#7A9980;--green:#2D7D46;--orange:#E85D26;--red:#C0392B;--mtn:#FFCD00;--om:#FF6600;}
+--font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#F4A800;--dark:#0A0C10;--dark2:#132016;--card:#1A2E1E;--border:rgba(200,169,81,0.2);--text:#E8EAF0;--muted:#7A9980;--green:#2D7D46;--orange:#E85D26;--red:#C0392B;--mtn:#FFCD00;--om:#FF6600;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--dark);color:var(--text);font-family:var(--font-body);min-height:100vh;}
 nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(10,12,16,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
@@ -738,25 +738,25 @@ function esc(str){
 var S  = { depositBalance:0, withdrawBalance:0,  dailyEarnings:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
-{id:1,name:'Pad Thaï',color:'#C8A951',emoji:'🍜',
-  dish:'Nouilles de riz sautées aux crevettes, œuf, germes de soja et cacahuètes grillées. Le plat emblématique de notre cuisine.',
-  stars:1,
+{id:1,name:'Pad Thaï',color:'#64B5F6',emoji:'🍜',
+  dish:'Nouilles de riz sautées aux crevettes, oeuf, germes de soja et cacahuètes grillées. Le plat emblématique de notre cuisine.',
+  stars:1, photo:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80',
   activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, dailyDenom:5, minWithdraw:2000},
 {id:2,name:'Tom Kha',color:'#81C784',emoji:'🥥',
   dish:'Soupe onctueuse à la noix de coco, galanga, citronnelle et champignons. Un équilibre parfait entre douceur et épices.',
-  stars:2,
+  stars:2, photo:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80',
   activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:1, dailyDenom:5, minWithdraw:5000},
-{id:3,name:'Green Curry',color:'#2D7D46',emoji:'🍛',
+{id:3,name:'Green Curry',color:'#FFD54F',emoji:'🍛',
   dish:'Notre curry vert signature aux légumes frais, lait de coco et basilic thaï. La fierté du chef Green Pepper.',
-  stars:3,
+  stars:3, photo:'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=400&q=80',
   activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:1, dailyDenom:5, minWithdraw:10000},
-{id:4,name:'Larb Gai',color:'#E85D26',emoji:'🌶️',
+{id:4,name:'Larb Gai',color:'#FF8A65',emoji:'🌶️',
   dish:'Salade épicée de poulet haché, menthe fraîche, piment grillé et jus de citron vert. Explosion de saveurs garantie.',
-  stars:4,
+  stars:4, photo:'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=400&q=80',
   activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:1, dailyDenom:5, minWithdraw:20000},
-{id:5,name:'Massaman Royal',color:'#C8A951',emoji:'👑',
-  dish:'Le summum de notre carte : curry royal au bœuf fondant, pommes de terre, noix de cajou et cardamome. Un plat d\'exception réservé aux palais raffinés.',
-  stars:5,
+{id:5,name:'Massaman Royal',color:'#CE93D8',emoji:'👑',
+  dish:'Le summum de notre carte : curry royal au boeuf fondant, pommes de terre, noix de cajou et cardamome. Un plat exceptionnel reserve aux palais raffines.',
+  stars:5, photo:'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400&q=80',
   activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:1, dailyDenom:5, minWithdraw:50000},
 ];
 // Rules:
@@ -886,7 +886,20 @@ S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
   if(S.withdrawBalance===2000 && (CU.transactions||[]).length<=1 && !sessionStorage.getItem('bonusShown')){
     setTimeout(function(){ toast('🎁 Bienvenue ! 2 000 FCFA offerts sur votre solde retrait !'); sessionStorage.setItem('bonusShown','1'); },1500);
   } S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
-S.activeInvestments=(CU.activeInvestments||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
+S.activeInvestments=(CU.activeInvestments||[]).map(function(x){
+    // Recalculer dailyGain à 1/5 pour tous (anciens et nouveaux)
+    var dg=Math.floor((x.amount||0)*1/5);
+    return Object.assign({},x,{
+      returnDate:x.returnDate?new Date(x.returnDate):new Date(),
+      dailyGain:dg,
+      dailyNumerator:1,
+      dailyDenom:5,
+      minWithdraw:x.minWithdraw||x.amount||0,
+      lastClaimDate:x.lastClaimDate||x.startDate||new Date().toISOString(),
+      accumulatedGains:x.accumulatedGains||0,
+      active:true
+    });
+  });
 S.transactions=CU.transactions||[];
 S.pendingActivReturns=(CU.pendingActivReturns||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
 S.spinTurns=CU.spinTurns||0;
@@ -996,7 +1009,7 @@ var needMore=S.activeVip===p.id-1&&(S.depositBalance||0)<p.activAmt;
 var alreadyInv=S.activeInvestments.some(function(x){return x.vipId===p.id;});
 var profit=Math.floor(p.investAmt*p.rate), total=p.investAmt+profit;
 var ac=document.createElement('div'); ac.className='vip-card';
-ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+'<div style="font-size:12px;color:var(--gold);margin:4px 0 6px;letter-spacing:3px;">'+'★'.repeat(p.stars||1)+'☆'.repeat(5-(p.stars||1))+'</div>'+(p.dish?'<div style="font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;padding:6px 8px;background:rgba(200,169,81,0.05);border-radius:6px;border-left:2px solid var(--gold);margin-bottom:8px;">🍽️ '+p.dish+'</div>':'')+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
+ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+'<div style="font-size:12px;color:var(--gold);margin:4px 0 6px;letter-spacing:2px;">'+'★'.repeat(p.stars||1)+'☆'.repeat(5-(p.stars||1))+'</div>'+(p.photo?'<img src="'+p.photo+'" alt="'+p.name+'" style="width:100%;height:140px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'')+(p.dish?'<div style="font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;padding:6px 8px;background:rgba(244,168,0,0.05);border-radius:6px;border-left:2px solid var(--gold);margin-bottom:8px;">🍽️ '+p.dish+'</div>':'')+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
 ag.appendChild(ac);
 var ic=document.createElement('div'); ic.className='vip-card';
 var dr=(p.rate/p.days*100).toFixed(1);
