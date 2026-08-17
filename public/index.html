@@ -1148,9 +1148,15 @@ function confirmInvest(){
     toast('Activez d\'abord '+CP.name+' (Partie 1)','err');return;
   }
   // Un seul investissement actif par VIP
-  if(S.activeInvestments.some(function(x){return x.vipId===CP.id;})){
-    toast('Investissement '+CP.name+' déjà en cours','err');return;
-  }
+  const MAX_INVEST_PAR_VIP = 5; // <-- change le 3 par le "x" que tu veux
+
+const nbInvestActifsSurCeVIP = S.activeInvestments.filter(function(x){
+  return x.vipId === CP.id;
+}).length;
+
+if(nbInvestActifsSurCeVIP >= MAX_INVEST_PAR_VIP){
+  toast('Limite atteinte : '+MAX_INVEST_PAR_VIP+' investissements max pour '+CP.name,'err');return;
+}
 
 
 // Deduct exactly investAmt
