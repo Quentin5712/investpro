@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InvestPro</title>
+<title>Green Pepper</title>
 
 <style>
 :root{
 --font-head: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
---font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#F4A800;--dark:#0A0C10;--dark2:#12151C;--card:#1E2232;--border:rgba(244,168,0,0.15);--text:#E8EAF0;--muted:#7A7F96;--green:#00C896;--orange:#FF6B35;--red:#FF4D4D;--mtn:#FFCD00;--om:#FF6600;}
+--font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;--gold:#F4A800;--dark:#0A0C10;--dark2:#132016;--card:#1A2E1E;--border:rgba(200,169,81,0.2);--text:#E8EAF0;--muted:#7A9980;--green:#2D7D46;--orange:#E85D26;--red:#C0392B;--mtn:#FFCD00;--om:#FF6600;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--dark);color:var(--text);font-family:var(--font-body);min-height:100vh;}
 nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(10,12,16,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
@@ -125,26 +125,45 @@ function loadEmailConfig(){
 }
 
 function initEmailJS(){
-  if(EMAILJS_PUBLIC_KEY) emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+  // Charger config depuis localStorage
+  var cfg=JSON.parse(localStorage.getItem('ejs_cfg')||'null');
+  if(cfg){
+    EMAILJS_PUBLIC_KEY  = cfg.pk  || EMAILJS_PUBLIC_KEY;
+    EMAILJS_SERVICE_ID  = cfg.svc || EMAILJS_SERVICE_ID;
+    EMAILJS_TEMPLATE_ID = cfg.tpl || EMAILJS_TEMPLATE_ID;
+    ADMIN_EMAIL         = cfg.em  || ADMIN_EMAIL;
+  }
+  if(EMAILJS_PUBLIC_KEY){
+    try{ emailjs.init({publicKey: EMAILJS_PUBLIC_KEY}); console.log('EmailJS initialisé ✅'); }
+    catch(e){ console.error('EmailJS init error:', e.message); }
+  }
 }
 
 async function sendDepositEmail(dep){
-  if(!EMAILJS_PUBLIC_KEY || !ADMIN_EMAIL) return; // Pas configuré
+  // Vérifier config EmailJS
+  if(!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !ADMIN_EMAIL){
+    console.log('EmailJS non configuré - notification ignorée');
+    return;
+  }
   try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    var params = {
       to_email:    ADMIN_EMAIL,
-      user_name:   dep.userName,
-      user_email:  dep.userEmail,
-      user_phone:  dep.userTel,
-      amount:      dep.amount.toLocaleString() + ' FCFA',
-      operator:    dep.operator,
-      tx_code:     dep.txCode || 'Non fourni',
+      user_name:   dep.userName   || 'Inconnu',
+      user_email:  dep.userEmail  || '',
+      user_phone:  dep.userTel    || '',
+      amount:      (dep.amount||0).toLocaleString() + ' FCFA',
+      operator:    dep.operator   || '',
+      tx_code:     dep.txCode     || 'Non fourni',
+      sms_text:    dep.smsText    || 'Aucun SMS fourni',
       date:        new Date(dep.date).toLocaleString('fr-FR'),
-      approve_url: window.location.href
-    });
+      approve_url: window.location.origin || window.location.href
+    };
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
     console.log('Email admin envoyé ✅');
+    toast('📧 Notification envoyée à l\'admin');
   } catch(e) {
-    console.log('Email non envoyé:', e.message);
+    console.error('Email non envoyé:', e.message, e);
+    // Ne pas bloquer l'utilisateur si l'email échoue
   }
 }
 initEmailJS();
@@ -153,7 +172,7 @@ initEmailJS();
 </head>
 <body>
 <!-- INSTANT LOADING SCREEN -->
-<div id="loadScreen" style="position:fixed;inset:0;background:#0A0C10;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
+<div id="loadScreen" style="position:fixed;inset:0;background:#0D1A0F;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
   <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:#E8EAF0;margin-bottom:8px;">Invest<span style="color:#F4A800;">Pro</span></div>
   <div style="color:#7A7F96;font-size:13px;margin-bottom:28px;">Chargement en cours...</div>
   <div style="width:180px;height:3px;background:#1E2232;border-radius:2px;overflow:hidden;">
@@ -162,7 +181,7 @@ initEmailJS();
   <div id="loadMsg" style="color:#4A4F66;font-size:11px;margin-top:12px;">Connexion à la base de données...</div>
 </div>
 
-<div id="authWrap" style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#0A0C10,#12151C,#0A0C10);">
+<div id="authWrap" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--dark,#0A0C10);overflow-y:auto;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#0A0C10,#12151C,#0A0C10);">
 <div style="background:#1E2232;border:1px solid rgba(244,168,0,0.2);border-radius:20px;padding:30px 24px;width:100%;max-width:390px;box-shadow:0 30px 60px rgba(0,0,0,0.5);">
 <div style="font-family:system-ui,sans-serif;font-size:22px;font-weight:800;text-align:center;margin-bottom:3px;">Invest<span style="color:#F4A800;">Pro</span></div>
 <div style="text-align:center;color:#7A7F96;font-size:12px;margin-bottom:20px;">Plateforme d'investissement</div>
@@ -178,8 +197,8 @@ initEmailJS();
 <div style="text-align:center;font-size:11px;color:#7A7F96;margin-top:12px;">Pas de compte ? <a href="#" onclick="goRegister();return false;" style="color:#F4A800;text-decoration:none;">S'inscrire</a></div>
 </div>
 <div id="pReg" style="display:none;">
-<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Nom complet</div><input id="rName" type="text" placeholder="Jean Dupont" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
-<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Email</div><input id="rEmail" type="email" placeholder="jean@email.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
+<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Nom complet</div><input id="rName" type="text" placeholder="Nom complet" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
+<div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Email</div><input id="rEmail" type="email" placeholder="Adresse email" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Téléphone</div><input id="rPhone" type="tel" placeholder="655 123 456" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:8px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Mot de passe</div><input id="rPass" type="password" placeholder="Min 6 caractères" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
 <div style="margin-bottom:12px;"><div style="font-size:10px;color:#7A7F96;margin-bottom:3px;">Confirmer</div><input id="rPass2" type="password" placeholder="Répéter" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #2A2E3E;background:#12151C;color:#E8EAF0;font-size:13px;outline:none;box-sizing:border-box;"></div>
@@ -190,7 +209,7 @@ initEmailJS();
 </div>
 </div>
 
-<div id="appWrap" style="display:none;">
+<div id="appWrap" style="display:none;position:relative;z-index:1;">
 <nav>
 <div style="display:flex;align-items:center;gap:8px;">
 <div class="logo">Invest<span>Pro</span></div>
@@ -215,12 +234,13 @@ initEmailJS();
 <button class="tab" onclick="goPage('withdraw')">💸 Retrait</button>
 <button class="tab" onclick="goPage('history')">📋 Historique</button>
 <button class="tab" onclick="goPage('share')" style="background:linear-gradient(135deg,#9C27B0,#673AB7);color:#fff;border-color:transparent;">🔗 Partager</button>
+<button class="tab" onclick="goPage('cgu')">📋 CGU</button>
 <button class="tab" onclick="goPage('profile')">👤 Profil</button>
 <button class="tab" id="adminTab" style="display:none;background:linear-gradient(135deg,#FF6B35,#E84393);color:#fff;border-color:transparent;" onclick="goPage('admin')">⚙️ Admin</button>
 </div>
 
 <div class="page active" id="page-dashboard">
-<div class="sec-label">Vue d'ensemble</div><div class="sec-title">Mon Portefeuille</div>
+<div class="sec-label">Vue d'ensemble</div><div class="sec-title">Mon Investissement 🌶️</div>
 <div class="grid">
 <div class="card" style="border-color:rgba(244,168,0,0.3);"><div class="card-lbl">💳 Solde dépôt</div><div class="card-val gold" id="sDepBal">0 FCFA</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">Pour investir & activer VIP</div></div>
 <div class="card" style="border-color:rgba(0,200,150,0.3);"><div class="card-lbl">💸 Solde retrait</div><div class="card-val green" id="sWdBal">0 FCFA</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">Retirable</div></div>
@@ -376,6 +396,84 @@ initEmailJS();
 </div>
 </div>
 
+<div class="page" id="page-cgu">
+<div class="sec-label">Légal</div>
+<div class="sec-title">Conditions d'utilisation</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">📋 Présentation</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Green Pepper est une plateforme d'investissement mobile permettant aux utilisateurs de faire fructifier leur argent via des plans VIP. En vous inscrivant, vous acceptez les présentes conditions.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Lors de votre <strong style="color:var(--text);">premier dépôt approuvé d'au moins 4 000 FCFA</strong>, vous recevez automatiquement <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde retrait</strong>.<br><br>
+    Ce bonus est <strong style="color:var(--orange);">retirable uniquement</strong> — il ne peut pas être utilisé pour investir.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">💰 Plans VIP</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    <strong style="color:var(--text);">Partie 1 — Activation :</strong> Activez un niveau VIP avec un montant fixe. Vous recevrez un retour ×100 après la durée d'échéance (90 à 120 jours selon le niveau).<br><br>
+    <strong style="color:var(--text);">Partie 2 — Investissement :</strong> Investissez sur votre niveau VIP débloqué. Vous recevrez un retour majoré après la durée indiquée.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">📲 Dépôts</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Les dépôts s'effectuent via MTN MoMo ou Orange Money. Après envoi, collez le SMS de confirmation reçu de votre opérateur. Votre solde est crédité après validation par l'administrateur.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">💸 Retraits</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Seul le <strong style="color:var(--text);">solde retrait</strong> est retirable. Il est alimenté par vos retours d'investissement et commissions. Des frais de <strong style="color:var(--orange);">5%</strong> sont appliqués sur chaque retrait.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🤝 Parrainage</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    En parrainant un ami avec votre lien unique :<br>
+    • Vous recevez <strong style="color:var(--gold);">+1 tour de roue</strong> à son inscription<br>
+    • Vous recevez <strong style="color:var(--green);">+1 000 FCFA</strong> lorsque <strong>2 de vos filleuls</strong> ont chacun effectué leur premier dépôt<br>
+    • Vous percevez des commissions sur ses retours d'investissement :<br>
+    &nbsp;&nbsp;— Niveau 1 (filleul direct) : <strong>7%</strong><br>
+    &nbsp;&nbsp;— Niveau 2 : <strong>5%</strong><br>
+    &nbsp;&nbsp;— Niveau 3 : <strong>3%</strong>
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎰 Roue de la Fortune</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Chaque filleul inscrit vous donne droit à <strong style="color:var(--text);">1 tour de roue</strong>. Les gains de la roue sont crédités sur votre solde retrait.
+  </div>
+</div>
+
+<div class="pay-card" style="margin-bottom:12px;">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🔒 Sécurité</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    Votre mot de passe est chiffré avant stockage. Ne partagez jamais vos identifiants. Green Pepper ne vous demandera jamais votre mot de passe par message.
+  </div>
+</div>
+
+<div class="pay-card">
+  <div style="font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--gold);margin-bottom:8px;">🎁 Bonus d'inscription</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+    À l'inscription, vous recevez <strong style="color:var(--green);">2 000 FCFA</strong> crédités sur votre <strong style="color:var(--text);">solde retrait</strong>.<br><br>
+    Ce bonus ne peut <strong style="color:var(--orange);">pas être utilisé pour investir</strong>. Il est disponible au retrait uniquement lorsque <strong style="color:var(--text);">au moins 2 de vos filleuls ont chacun effectué leur premier dépôt</strong>.
+  </div>
+</div>
+
+</div>
+
 <div class="page" id="page-profile">
 <div class="sec-label">Mon compte</div><div class="sec-title">Profil</div>
 <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:13px;">
@@ -406,7 +504,16 @@ initEmailJS();
 <button onclick="saveEmailConfig()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--green);color:#000;font-family:var(--font-head);font-weight:700;font-size:12px;cursor:pointer;">💾 Enregistrer</button>
 <span id="cfgStatus" style="font-size:11px;color:var(--muted);margin-left:10px;"></span>
 </div>
-<button id="closeSiteBtn" onclick="toggleSite()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,77,77,0.4);background:rgba(255,77,77,0.12);color:var(--red);cursor:pointer;font-family:system-ui,sans-serif;font-weight:700;font-size:12px;">🔴 Fermer</button>
+<div style="background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
+<div style="font-family:var(--font-head);font-weight:700;margin-bottom:6px;font-size:13px;">⏸️ Contrôle des gains journaliers</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Bloquer empêche les utilisateurs de réclamer leurs gains quotidiens.</div>
+<div style="display:flex;gap:8px;">
+<button onclick="setDailyGainsStatus(false)" style="flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,77,77,0.15);color:var(--red);font-family:var(--font-head);font-weight:700;font-size:12px;">🔒 Bloquer gains</button>
+<button onclick="setDailyGainsStatus(true)" style="flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;background:rgba(0,200,150,0.15);color:var(--green);font-family:var(--font-head);font-weight:700;font-size:12px;">🔓 Débloquer gains</button>
+</div>
+<div id="dailyGainsStatus" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted);">Statut : chargement...</div>
+</div>
+<button id="closeSiteBtn"  onclick="toggleSite()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,77,77,0.4);background:rgba(255,77,77,0.12);color:var(--red);cursor:pointer;font-family:system-ui,sans-serif;font-weight:700;font-size:12px;">🔴 Fermer</button>
 </div>
 <div id="siteBanner" style="display:none;margin-bottom:11px;padding:9px 13px;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);border-radius:9px;align-items:center;justify-content:space-between;gap:7px;">
 <span style="color:var(--red);font-weight:600;font-size:12px;">🔴 Site fermé</span>
@@ -429,7 +536,7 @@ initEmailJS();
 <div id="a-dep"><div class="sec-label">En attente</div><div id="pendList"><div class="empty">Aucun.</div></div><div class="sep"></div><div class="sec-label">Historique</div><div id="depHist"></div></div>
 <div id="a-wd" style="display:none;"><div class="sec-label">À approuver</div><div id="pwdList"><div class="empty">Aucun.</div></div><div class="sep"></div><div class="sec-label">Historique</div><div id="wdHist"></div></div>
 <div id="a-users" style="display:none;"><div class="sec-label">Utilisateurs</div><div id="usersList"></div></div>
-<div id="a-inv" style="display:none;"><div class="sec-label">Investissements</div><div id="invList"></div></div>
+<div id="a-inv" style="display:none;"><div class="sec-label">Menu Green Pepper</div><div id="invList"></div></div>
 <div id="a-sms" style="display:none;">
 <div class="sec-label">Vérification Automatique SMS</div>
 <div style="background:rgba(0,200,150,0.05);border:1px solid rgba(0,200,150,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
@@ -485,6 +592,7 @@ initEmailJS();
 // ══════════════════════════════════════════
 // DATABASE: JSONBin.io (shared across all devices)
 // ══════════════════════════════════════════
+// Connexion JSONBin directe
 var BIN_ID  = '6a4cdd5cf5f4af5e296bb50b';
 var API_KEY = '$2a$10$WiRdDM1vwwyaoA.yf/.XkuA/2173q1VIdQ56RJyfD4vGgp8U5tu.O';
 // Save for compatibility
@@ -493,6 +601,19 @@ var DB_URL  = 'https://api.jsonbin.io/v3/b/';
 
 var dbCache = null;
 var isSaving = false;
+
+// ── Hash SHA-256 du mot de passe ──
+async function hashPassword(pass) {
+  try {
+    var msgBuf = new TextEncoder().encode(pass);
+    var hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
+    var hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  } catch(e) {
+    // Fallback si crypto non disponible (vieux navigateurs)
+    return pass;
+  }
+}
 
 async function dbRead() {
   if (!BIN_ID || !API_KEY) return null;
@@ -594,7 +715,7 @@ function showAuth(){
   var ls=document.getElementById('loadScreen');
   if(ls){
     document.getElementById('loadBar').style.width='100%';
-    document.getElementById('loadMsg').textContent='Prêt !';
+    document.getElementById('loadMsg').textContent='Bienvenue chez Green Pepper 🌿';
     setTimeout(function(){ls.style.display='none';},300);
   }
   document.getElementById('authWrap').style.display='flex';
@@ -603,14 +724,40 @@ function showAuth(){
 
 // ── STATE ──
 var CU = null;
-var S  = { depositBalance:0, withdrawBalance:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
+// ── Sécurité: Sanitisation XSS ──
+function esc(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+var S  = { depositBalance:0, withdrawBalance:0,  dailyEarnings:0, totalEarned:0, activeVip:0, activeInvestments:[], usedVipInvestments:[], transactions:[], pendingActivReturns:[], pendingReturns:[], spinTurns:0, spinEarned:0, refCount:0 };
 var ADMIN_TEL = '651364481';
 var VIP_PLANS = [
-{id:1,name:'VIP 1',color:'#64B5F6',emoji:'⭐',activAmt:2000, activReturn:100,activDays:120, investAmt:2000, rate:0.50,days:3},
-{id:2,name:'VIP 2',color:'#81C784',emoji:'🌟',activAmt:5000, activReturn:100,activDays:110, investAmt:5000, rate:0.40,days:5},
-{id:3,name:'VIP 3',color:'#FFD54F',emoji:'💫',activAmt:10000,activReturn:100,activDays:100, investAmt:10000,rate:0.60,days:7},
-{id:4,name:'VIP 4',color:'#FF8A65',emoji:'🔥',activAmt:20000,activReturn:100,activDays:90,  investAmt:20000,rate:0.80,days:10},
-{id:5,name:'VIP 5',color:'#CE93D8',emoji:'👑',activAmt:50000,activReturn:100,activDays:90,  investAmt:50000,rate:1.00,days:14},
+{id:1,name:'Pad Thaï',color:'#64B5F6',emoji:'🍜',
+  dish:'Nouilles de riz sautées aux crevettes, oeuf, germes de soja et cacahuètes grillées. Le plat emblématique de notre cuisine.',
+  stars:1, photo:'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&q=80',
+  activAmt:2000,  activReturn:100,activDays:120, investAmt:2000,  dailyNumerator:1, dailyDenom:5, minWithdraw:2000},
+{id:2,name:'Tom Kha',color:'#81C784',emoji:'🥥',
+  dish:'Soupe onctueuse à la noix de coco, galanga, citronnelle et champignons. Un équilibre parfait entre douceur et épices.',
+  stars:2, photo:'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80',
+  activAmt:5000,  activReturn:100,activDays:110, investAmt:5000,  dailyNumerator:1, dailyDenom:5, minWithdraw:5000},
+{id:3,name:'Green Curry',color:'#FFD54F',emoji:'🍛',
+  dish:'Notre curry vert signature aux légumes frais, lait de coco et basilic thaï. La fierté du chef Green Pepper.',
+  stars:3, photo:'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=400&q=80',
+  activAmt:10000, activReturn:100,activDays:100, investAmt:10000, dailyNumerator:1, dailyDenom:5, minWithdraw:10000},
+{id:4,name:'Larb Gai',color:'#FF8A65',emoji:'🌶️',
+  dish:'Salade épicée de poulet haché, menthe fraîche, piment grillé et jus de citron vert. Explosion de saveurs garantie.',
+  stars:4, photo:'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=400&q=80',
+  activAmt:20000, activReturn:100,activDays:90,  investAmt:20000, dailyNumerator:1, dailyDenom:5, minWithdraw:20000},
+{id:5,name:'Massaman Royal',color:'#CE93D8',emoji:'👑',
+  dish:'Le summum de notre carte : curry royal au boeuf fondant, pommes de terre, noix de cajou et cardamome. Un plat exceptionnel reserve aux palais raffines.',
+  stars:5, photo:'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400&q=80',
+  activAmt:50000, activReturn:100,activDays:90,  investAmt:50000, dailyNumerator:1, dailyDenom:5, minWithdraw:50000},
 ];
 // Rules:
 // - activAmt: paid ONCE to unlock the VIP level (not refunded, like a subscription)
@@ -625,16 +772,24 @@ var inp=document.getElementById('fEmail').value.trim();
 var pw=document.getElementById('fPass').value;
 if(!inp||!pw){authErr('Remplissez tous les champs.');return;}
 if(inp.toLowerCase()==='quentin'&&pw==='Quentin'){
-CU={id:'admin',name:'Quentin',email:'admin@investpro',isAdmin:true,joinedAt:new Date().toISOString()};
+CU={id:'admin',name:'Quentin',email:'admin@green-pepper',isAdmin:true,joinedAt:new Date().toISOString()};
 sessionStorage.setItem('cu',JSON.stringify(CU));enterApp();return;
 }
+var rawPw=pw;
+pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
 showSpinner(false);
 if(!db){authErr('Connexion JSONBin échouée. Vérifiez votre connexion internet et que le fichier est servi via un serveur HTTP.');return;}
 if(!db.siteOpen){authErr('Le site est temporairement fermé.');return;}
+// Compatibilité: accepter hash SHA-256 ET mot de passe en clair (anciens comptes)
 var u=null;
-for(var i=0;i<db.users.length;i++){if(db.users[i].email===inp.toLowerCase()&&db.users[i].pass===pw){u=db.users[i];break;}}
+for(var i=0;i<db.users.length;i++){
+  var usr=db.users[i];
+  if(usr.email===inp.toLowerCase()&&(usr.pass===pw||usr.pass===rawPw)){
+    u=usr;break;
+  }
+}
 if(!u){authErr('Email ou mot de passe incorrect.');return;}
 // Always take fresh data from DB
 CU=Object.assign({},u);
@@ -649,11 +804,16 @@ var email=document.getElementById('rEmail').value.trim().toLowerCase();
 var phone=document.getElementById('rPhone').value.trim();
 var pw=document.getElementById('rPass').value;
 var pw2=document.getElementById('rPass2').value;
-if(!name){authErr('Nom requis.');return;}
-if(!email||email.indexOf('@')<0){authErr('Email invalide.');return;}
+// Validation email stricte
+  var emailOk=/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
+  if(!name||name.length<2){authErr('Nom invalide (2 caractères min).');return;}
+  if(!email||!emailOk){authErr('Email invalide. Format requis: nom@gmail.com');return;}
 if(!phone||phone.length<8){authErr('Numéro invalide.');return;}
-if(pw.length<6){authErr('Mot de passe trop court.');return;}
+if(!/^[A-Z]/.test(pw)){authErr('Le mot de passe doit commencer par une majuscule.');return;}
+if(pw.length<6){authErr('Mot de passe trop court (6 car. min).');return;}
 if(pw!==pw2){authErr('Mots de passe différents.');return;}
+var rawPw=pw;
+pw=await hashPassword(pw);
 showSpinner(true);
 var db=await dbRead();
 if(!db){showSpinner(false);authErr('Connexion JSONBin échouée. Vérifiez internet.');return;}
@@ -664,8 +824,9 @@ var refInput=document.getElementById('rRef')?document.getElementById('rRef').val
 var refBy=refInput||params.get('ref')||window._refFromUrl||'';
 var refCode='INV-'+Math.random().toString(36).substr(2,6).toUpperCase();
   var nu={id:Date.now().toString(),name:name,email:email,phone:phone,pass:pw,joinedAt:new Date().toISOString(),refBy:refBy,refCode:refCode,depositBalance:0,withdrawBalance:0,totalEarned:0,activeVip:0,activeInvestments:[],transactions:[],pendingActivReturns:[],pendingReturns:[],spinTurns:0,spinEarned:0,refCount:0};
-db.users.push(nu);
-if(refBy){
+// Pas de bonus à l'inscription — bonus crédité au 1er dépôt >= 4000 FCFA
+  db.users.push(nu);
+  if(refBy){
     // Logique propre: chercher le parrain et créditer 1 tour
     var parrain=null;
     for(var j=0;j<db.users.length;j++){
@@ -690,6 +851,7 @@ if(refBy){
         sponsorEmail:parrain.email,
         referredUserId:nu.id,
         referredUserEmail:nu.email,
+        hasDeposited:false,
         referredUserName:name,
         status:'completed',
         spinCredited:true,
@@ -719,21 +881,41 @@ if(db){
 var u=db.users.find(function(x){return x.email===CU.email;});
 if(u){CU=u;sessionStorage.setItem('cu',JSON.stringify(CU));}
 }
-S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0; S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
-S.activeInvestments=(CU.activeInvestments||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
+S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
+  // Vérifier bonus inscription pour anciens utilisateurs
+  setTimeout(function(){ checkAndCreditBonus(); }, 2000); S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
+S.activeInvestments=(CU.activeInvestments||[]).map(function(x){
+    // Recalculer dailyGain à 1/5 pour tous (anciens et nouveaux)
+    var dg=Math.floor((x.amount||0)*1/5);
+    return Object.assign({},x,{
+      returnDate:x.returnDate?new Date(x.returnDate):new Date(),
+      dailyGain:dg,
+      dailyNumerator:1,
+      dailyDenom:5,
+      minWithdraw:x.minWithdraw||x.amount||0,
+      lastClaimDate:x.lastClaimDate||x.startDate||new Date().toISOString(),
+      accumulatedGains:x.accumulatedGains||0,
+      active:true
+    });
+  });
 S.transactions=CU.transactions||[];
 S.pendingActivReturns=(CU.pendingActivReturns||[]).map(function(x){return Object.assign({},x,{returnDate:new Date(x.returnDate)});});
 S.spinTurns=CU.spinTurns||0;
 S.spinEarned=CU.spinEarned||0;
 S.refCount=CU.refCount||0;
 S.usedVipInvestments=CU.usedVipInvestments||[];
+  
 }
 var ini=CU.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
 document.getElementById('avInit').textContent=ini;
 document.getElementById('adminTab').style.display=CU.isAdmin?'inline-block':'none';
 if(CU.isAdmin)document.getElementById('notifBell').style.display='block';
 updateUI();
-goPage(CU.isAdmin?'admin':'dashboard');
+goPage(CU.isAdmin?'admin':'dashboard');if(CU.isAdmin)aTab('users');
+  if(CU.isAdmin){
+    // Admin arrive sur onglet Utilisateurs
+    setTimeout(function(){ aTab('users'); },300);
+  }
 if(CU.isAdmin)setInterval(function(){if(document.getElementById('page-admin').classList.contains('active'))renderAdmin();},30000);
 if(!CU.isAdmin){
     setInterval(saveUserState,25000);
@@ -757,6 +939,13 @@ async function syncUserData(){
     var newTxLen=(fresh.transactions||[]).length;
     var newSpinTurns=fresh.spinTurns||0;
     var newRefCount=fresh.refCount||0;
+    // Mettre à jour accumulatedGains depuis la dernière sauvegarde
+    if(fresh.activeInvestments){
+      fresh.activeInvestments.forEach(function(fi){
+        var li=S.activeInvestments.find(function(x){return x.id===fi.id;});
+        if(li) li.accumulatedGains=fi.accumulatedGains||0;
+      });
+    }
     var changed=(newDep!==oldDep)||(newWd!==oldWd)||(newTxLen!==oldTxLen)
                ||(newSpinTurns!==(S.spinTurns||0))||(newRefCount!==(S.refCount||0));
     if(changed){
@@ -815,15 +1004,14 @@ VIP_PLANS.forEach(function(p){
 var activated=S.activeVip>=p.id;
 var canActivate=S.activeVip===p.id-1&&(S.depositBalance||0)>=p.activAmt;
 var needMore=S.activeVip===p.id-1&&(S.depositBalance||0)<p.activAmt;
-var alreadyInv=S.activeInvestments.some(function(x){return x.vipId===p.id;});
 var profit=Math.floor(p.investAmt*p.rate), total=p.investAmt+profit;
 var ac=document.createElement('div'); ac.className='vip-card';
-ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
+ac.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div>'+'<div style="font-size:12px;color:var(--gold);margin:4px 0 6px;letter-spacing:2px;">'+'★'.repeat(p.stars||1)+'☆'.repeat(5-(p.stars||1))+'</div>'+(p.photo?'<img src="'+p.photo+'" alt="'+p.name+'" style="width:100%;height:140px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'')+(p.dish?'<div style="font-size:10px;color:var(--muted);line-height:1.6;font-style:italic;padding:6px 8px;background:rgba(244,168,0,0.05);border-radius:6px;border-left:2px solid var(--gold);margin-bottom:8px;">🍽️ '+p.dish+'</div>':'')+(activated?'<span style="color:var(--green);font-size:11px;font-weight:700;">✅ Activé</span>':'<span style="color:var(--muted);font-size:10px;">Non activé</span>')+'</div><div class="vip-body"><div class="vip-row"><span>Frais d\'activation</span><span style="font-weight:700;color:'+p.color+';">'+p.activAmt.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💰 Retour (80%)</span><span style="color:var(--green);font-weight:700;">'+(p.activAmt*p.activReturn).toLocaleString()+' FCFA</span></div><div class="vip-row"><span>⏳ Délai retour</span><span>'+p.activDays+' jours</span></div><div class="vip-row"><span>🔓 Débloque</span><span>Investissements '+p.name+'</span></div>'+(activated?'<button class="vip-btn" style="background:rgba(0,200,150,0.12);color:var(--green);" disabled>✅ Niveau activé</button>':(canActivate?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="activateVip('+p.id+')">🔓 Activer — '+p.activAmt.toLocaleString()+' FCFA</button>':(needMore?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.activAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn locked" disabled>🔒 Activez d\'abord VIP '+(p.id-1)+'</button>')))+'</div></div>';
 ag.appendChild(ac);
 var ic=document.createElement('div'); ic.className='vip-card';
 var dr=(p.rate/p.days*100).toFixed(1);
 var dailyProfit=Math.floor(profit/p.days);
-ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(alreadyInv?'<button class="vip-btn" style="background:rgba(244,168,0,0.12);color:var(--gold);" disabled>⏳ Investissement en cours</button>':(((S.usedVipInvestments||[]).filter(function(x){return x===p.id;}).length>=2)?'<button class="vip-btn" style="background:rgba(122,127,150,0.15);color:var(--muted);" disabled>&#10003; Max 2 investissements atteints</button>':(S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
+ic.innerHTML='<div class="vip-head"><div><span class="vip-badge" style="background:'+p.color+'22;color:'+p.color+';">'+p.emoji+' '+p.name+'</span></div><div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:700;color:'+p.color+';">+'+Math.round(p.rate*100)+'%</div><div style="font-size:10px;color:var(--muted);">en '+p.days+' jours</div></div></div><div class="vip-body"><div class="vip-row"><span>💰 Montant à investir</span><span style="font-weight:800;color:'+p.color+';">'+p.investAmt.toLocaleString()+' FCFA</span></div><div style="font-size:10px;color:var(--muted);margin:-4px 0 8px;font-style:italic;">Montant exact — ni plus ni moins</div><div class="vip-row"><span>📅 Durée</span><span>'+p.days+' jours</span></div><div class="vip-row"><span>📈 Revenu journalier</span><span style="color:var(--green);font-weight:700;">+'+dailyProfit.toLocaleString()+' FCFA/jour</span></div><div class="vip-row"><span>📈 Total profit</span><span style="color:var(--green);">+'+profit.toLocaleString()+' FCFA</span></div><div class="vip-row"><span>💵 Reçu après '+p.days+'j</span><span style="color:'+p.color+';font-weight:700;">'+total.toLocaleString()+' FCFA</span></div>'+(activated?(((S.depositBalance||0)>=p.investAmt?'<button class="vip-btn" style="background:linear-gradient(135deg,'+p.color+','+p.color+'bb);color:#0A0C10;" onclick="openModal('+p.id+')">💰 Investir '+p.investAmt.toLocaleString()+' FCFA</button>':((S.depositBalance||0)<p.investAmt?'<button class="vip-btn locked" disabled>Solde insuffisant ('+p.investAmt.toLocaleString()+' FCFA requis)</button>':'<button class="vip-btn" style="background:rgba(244,168,0,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="openModal('+p.id+')">💰 Investir — retirer excédent d\'abord<br><small>Requis: '+p.investAmt.toLocaleString()+' FCFA exactement</small></button>'))):'<button class="vip-btn locked" disabled>🔒 Activez d\'abord ce niveau VIP</button>')+'</div></div>';
 ig.appendChild(ic);
 });
 }
@@ -892,6 +1080,50 @@ toast('💰 '+r.returnAmt.toLocaleString()+' FCFA (80%) récupérés !');
 }
 
 var CP=null;
+// Afficher modal d'activation VIP (réactivation)
+function showActivModal(id){
+  CP=VIP_PLANS.find(function(x){return x.id===id;});
+  if(!CP)return;
+  // Montrer le modal d'activation (partie 1)
+  var modal=document.getElementById('activModal');
+  if(modal){
+    modal.style.display='flex';
+    var mTitle=document.getElementById('activTitle');
+    var mInfo=document.getElementById('activInfo');
+    if(mTitle) mTitle.textContent=CP.emoji+' Réactiver '+CP.name;
+    if(mInfo) mInfo.textContent='Réactivez ce niveau pour débloquer 2 nouveaux investissements. Coût: '+CP.activAmt.toLocaleString()+' FCFA';
+  } else {
+    // Fallback: utiliser confirm
+    if(confirm('Réactiver '+CP.name+' pour '+CP.activAmt.toLocaleString()+' FCFA ?\nCela débloquera 2 nouveaux investissements.')){
+      doActivation();
+    }
+  }
+}
+
+function doActivation(){
+  if(!CP) return;
+  if((S.depositBalance||0)<CP.activAmt){
+    toast('Solde dépôt insuffisant. Requis: '+CP.activAmt.toLocaleString()+' FCFA','err');return;
+  }
+  // Déduire du solde dépôt
+  S.depositBalance=(S.depositBalance||0)-CP.activAmt;
+  // Réinitialiser compteur investissements pour ce VIP
+  S.usedVipInvestments=(S.usedVipInvestments||[]).filter(function(x){return x!==CP.id;});
+  // Mettre à jour activeVip
+  if(CP.id > S.activeVip) S.activeVip=CP.id;
+  // Enregistrer retour activation dans pendingActivReturns
+  var rd=new Date();rd.setDate(rd.getDate()+CP.activDays);
+  S.pendingActivReturns=S.pendingActivReturns||[];
+  S.pendingActivReturns.push({
+    vipId:CP.id, vipName:CP.name, amount:CP.activAmt,
+    returnAmt:CP.activAmt*CP.activReturn,
+    returnDate:rd.toISOString(), days:CP.activDays, color:CP.color, emoji:CP.emoji
+  });
+  addTx({type:'activ',label:'Réactivation '+CP.name+' — '+CP.activAmt.toLocaleString()+' FCFA',amount:-CP.activAmt,status:'done'});
+  saveUserState(); updateUI(); renderVip();
+  toast('✅ '+CP.name+' réactivé ! 2 nouveaux investissements débloqués.');
+}
+
 function openModal(id){
 CP=VIP_PLANS.find(function(x){return x.id===id;});
 if(!CP)return;
@@ -904,50 +1136,60 @@ document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');CP=null;}
 function confirmInvest(){
-if(!CP)return;
-// STRICT: user must have EXACTLY investAmt (enforce exact amount rule)
-if((S.depositBalance||0) < CP.investAmt){
-toast('Solde insuffisant. Requis: '+CP.investAmt.toLocaleString()+' FCFA','err');return;
-}
-if(S.activeInvestments.some(function(x){return x.vipId===CP.id;})){
-  toast('Un investissement '+CP.name+' est déjà en cours','err');return;
-}
-var vipCount=(S.usedVipInvestments||[]).filter(function(x){return x===CP.id;}).length;
-if(vipCount>=2){
-  toast(CP.name+' : maximum 2 investissements par niveau atteint.','err');return;
-}
+  if(!CP)return;
+  if((S.depositBalance||0) < CP.investAmt){
+    toast('Solde dépôt insuffisant. Requis: '+CP.investAmt.toLocaleString()+' FCFA','err');return;
+  }
+  // Vérifier que le VIP est bien activé (partie 1)
+  if(S.activeVip < CP.id){
+    toast('Activez d\'abord '+CP.name+' (Partie 1)','err');return;
+  }
+  // Un seul investissement actif par VIP
+
 
 // Deduct exactly investAmt
 S.depositBalance=(S.depositBalance||0)-CP.investAmt;
 var profit = Math.floor(CP.investAmt * CP.rate);
 var dailyProfit = Math.floor(profit / CP.days);
 var rd = new Date(Date.now() + CP.days * 86400000);
-S.activeInvestments.push({
-id: Date.now(), vipId: CP.id, vipName: CP.name,
-amount: CP.investAmt, profit: profit, total: CP.investAmt + profit,
-dailyProfit: dailyProfit, returnDate: rd, days: CP.days,
-color: CP.color, emoji: CP.emoji
-});
-  if(!S.usedVipInvestments)S.usedVipInvestments=[];
-  S.usedVipInvestments.push(CP.id); // compte les investissements par VIP
+// Nouvelle logique: gains journaliers n/500
+  var dailyGain=Math.floor(CP.investAmt*(CP.dailyNumerator||1)/500);
+  S.activeInvestments.push({
+    id: Date.now(), vipId: CP.id, vipName: CP.name,
+    amount: CP.investAmt, dailyGain: dailyGain,
+    dailyNumerator: CP.dailyNumerator||1,
+    minWithdraw: CP.minWithdraw||CP.investAmt,
+    accumulatedGains: 0,
+    startDate: new Date().toISOString(),
+    lastClaimDate: new Date().toISOString(),
+    color: CP.color, emoji: CP.emoji, active: true
+  });
+   // compte les investissements par VIP
 addTx({type:'invest', label:'Investissement '+CP.name+' ('+CP.investAmt.toLocaleString()+' FCFA)', amount:-CP.investAmt, status:'active', vipId:CP.id});
 saveUserState(); closeModal(); updateUI(); renderVip();
 toast('✅ '+CP.name+' lancé ! Capital + profit récupérables dans '+CP.days+' jours.');
 goPage('dashboard');
 }
 
+function calcDailyGains(inv){
+  var now=new Date(), last=new Date(inv.lastClaimDate||inv.startDate);
+  var days=Math.floor((now-last)/(1000*60*60*24));
+  return (inv.dailyGain||0)*days;
+}
+
 function renderActive(){
-var el=document.getElementById('activeList');
-if(!S.activeInvestments.length){el.innerHTML='<div class="empty">Aucun investissement actif.</div>';return;}
+  var el=document.getElementById('activeList');
+  if(!el)return;
+  if(!S.activeInvestments.length){el.innerHTML='<div class="empty">Aucun investissement actif.</div>';return;}
 var now=Date.now();
 el.innerHTML=S.activeInvestments.map(function(inv){
-var dl=Math.max(0,Math.ceil((new Date(inv.returnDate)-now)/86400000));
-var prog=Math.max(0,Math.min(100,((inv.days-dl)/inv.days)*100));
-var dEarned=Math.floor(inv.profit/inv.days*(inv.days-dl));
-var daysElapsed=inv.days-dl;
-var dpDay=inv.dailyProfit||(Math.floor(inv.profit/inv.days));
-return '<div style="background:var(--card);border:1px solid '+inv.color+'33;border-radius:12px;padding:13px;margin-bottom:9px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span class="vip-badge" style="background:'+inv.color+'22;color:'+inv.color+';">'+inv.emoji+' '+inv.vipName+'</span>'+(dl===0?'<button onclick="claim('+inv.id+')" style="background:var(--green);color:#000;border:none;padding:6px 14px;border-radius:6px;font-weight:700;cursor:pointer;font-family:\'Syne\',sans-serif;font-size:11px;">Récupérer 🎉</button>':'<div class="timer"><div class="tdot"></div>'+dl+'j restant'+(dl>1?'s':'')+'</div>')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:8px;"><div style="background:#12151C;border-radius:7px;padding:6px 8px;"><div style="color:var(--muted);font-size:10px;">Capital investi</div><div style="font-weight:700;color:var(--text);">'+inv.amount.toLocaleString()+' FCFA</div></div><div style="background:#12151C;border-radius:7px;padding:6px 8px;"><div style="color:var(--muted);font-size:10px;">Revenu/jour</div><div style="font-weight:700;color:var(--green);">+'+dpDay.toLocaleString()+' FCFA</div></div><div style="background:#12151C;border-radius:7px;padding:6px 8px;"><div style="color:var(--muted);font-size:10px;">Jours écoulés</div><div style="font-weight:700;">'+daysElapsed+'/'+inv.days+'</div></div><div style="background:#12151C;border-radius:7px;padding:6px 8px;"><div style="color:var(--muted);font-size:10px;">Gagné à ce jour</div><div style="font-weight:700;color:'+inv.color+';">+'+dEarned.toLocaleString()+' FCFA</div></div></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:var(--muted);">Total à récupérer:</span><strong style="color:'+inv.color+';">'+inv.total.toLocaleString()+' FCFA</strong></div><div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:'+prog+'%;background:'+inv.color+';border-radius:2px;transition:width 1s;"></div></div></div>';
-}).join('');
+    var newGains=calcDailyGains(inv);
+    var totalAccum=(inv.accumulatedGains||0)+newGains;
+    var dailyGain=inv.dailyGain||Math.floor((inv.amount||0)*((inv.dailyNumerator||1))/500);
+    var minWd=inv.minWithdraw||inv.amount;
+    var canClaim=totalAccum>=minWd;
+    return '<div style="background:var(--card);border:1px solid '+inv.color+'33;border-radius:12px;padding:14px;margin-bottom:10px;">'      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'        +'<div style="display:flex;align-items:center;gap:8px;">'          +'<span style="font-size:18px;">'+inv.emoji+'</span>'          +'<span style="font-family:var(--font-head);font-weight:700;font-size:14px;">'+inv.vipName+'</span>'        +'</div>'        +'<div style="font-family:var(--font-head);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:'+inv.color+'22;color:'+inv.color+';">● Actif</div>'      +'</div>'      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'        +'<div style="background:#12151C;border-radius:8px;padding:8px;">'          +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">Capital investi</div>'          +'<div style="font-weight:700;font-size:13px;">'+(inv.amount||0).toLocaleString()+' FCFA</div>'        +'</div>'        +'<div style="background:#12151C;border-radius:8px;padding:8px;">'          +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">Gain/jour ('+inv.dailyNumerator+'/500)</div>'          +'<div style="font-weight:700;font-size:13px;color:var(--green);">+'+dailyGain.toLocaleString()+' FCFA</div>'        +'</div>'        +'<div style="background:#12151C;border-radius:8px;padding:8px;">'          +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">Gains accumulés</div>'          +'<div style="font-weight:700;font-size:13px;color:var(--gold);">'+totalAccum.toLocaleString()+' FCFA</div>'        +'</div>'        +'<div style="background:#12151C;border-radius:8px;padding:8px;">'          +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">Retrait minimum</div>'          +'<div style="font-weight:700;font-size:13px;color:var(--muted);">'+minWd.toLocaleString()+' FCFA</div>'        +'</div>'      +'</div>'      +(canClaim        ?'<button onclick="claimDailyGains('+inv.id+')" style="width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--green),#00A87A);color:#000;font-family:var(--font-head);font-weight:800;font-size:13px;">💰 Retirer '+totalAccum.toLocaleString()+' FCFA</button>'        :'<div style="width:100%;padding:10px;border-radius:9px;background:rgba(122,127,150,0.1);color:var(--muted);font-size:11px;text-align:center;">🔒 Minimum '+minWd.toLocaleString()+' FCFA pour retirer<br><small>'+totalAccum.toLocaleString()+' / '+minWd.toLocaleString()+' FCFA accumulés</small></div>'      )    +'</div>';
+  }).join('');
 }
 
 async function claim(id){
@@ -1016,7 +1258,7 @@ function resetDep(){
 function openMomo(){
   var a=parseInt(document.getElementById('depAmt').value);
   if(!depOp){toast('Choisissez un operateur','err');return;}
-  if(!a||a<1000){toast('Minimum 1 000 FCFA','err');return;}
+  if(!a||a<4000){toast('Minimum 4 000 FCFA pour commencer à investir','err');return;}
   var ussd=depOp==='mtn'
     ?'tel:*126*1*1*'+ADMIN_TEL+'*'+a+'%23'
     :'tel:*144*1*'+ADMIN_TEL+'*'+a+'%23';
@@ -1082,6 +1324,8 @@ async function confirmDepWithSms(){
   document.getElementById('depStep3Msg').textContent=
     a.toLocaleString()+' FCFA soumis. Votre solde sera credite apres validation admin.';
   toast('Depot soumis ! En attente de validation.');
+  // Envoyer notification email à l'admin
+  sendDepositEmail(dep);
 }
 
 var wdOp=null;
@@ -1098,7 +1342,12 @@ var netAmount=a-frais;
 if(!confirm('Retrait: '+a.toLocaleString()+' FCFA\nFrais (5%): -'+frais.toLocaleString()+' FCFA\nVous recevrez: '+netAmount.toLocaleString()+' FCFA\n\nConfirmer ?'))return;
 var op=wdOp==='mtn'?'MTN MoMo':'Orange Money';
 var wid=Date.now().toString();
-var wd={id:wid,userEmail:CU.email,userName:CU.name,userTel:ph,amount:a,frais:frais||Math.ceil(a*0.05),netAmount:netAmount||(a-Math.ceil(a*0.05)),operator:op,date:new Date().toISOString(),status:'pending'};
+var txs=CU.transactions||[];
+var wdSource='gains';
+if(txs.some(function(t){return t.type==='bonus_unlocked'||t.type==='referral_bonus';})&&txs.some(function(t){return t.type==='daily_gain';})) wdSource='mixte';
+else if(txs.some(function(t){return t.type==='bonus_unlocked'||t.type==='referral_bonus';})) wdSource='bonus';
+else if(txs.some(function(t){return t.type==='daily_gain';})) wdSource='gains_journaliers';
+var wd={id:wid,userEmail:CU.email,userName:CU.name,userTel:ph,amount:a,frais:frais||Math.ceil(a*0.05),netAmount:netAmount||(a-Math.ceil(a*0.05)),operator:op,date:new Date().toISOString(),status:'pending',wdSource:wdSource};
 await dbUpdate(function(db){db.withdrawals=db.withdrawals||[];db.withdrawals.push(wd);db.notifications=db.notifications||[];db.notifications.unshift({type:'withdraw',id:wid,userName:CU.name,userEmail:CU.email,userTel:ph,amount:a,operator:op,date:wd.date,read:false});return db;});
 addTx({type:'withdraw',label:'Retrait '+op,amount:-a,status:'pending',wid:wid,phone:ph});
 updateUI();
@@ -1108,6 +1357,80 @@ wdOp=null; document.getElementById('wMtn').classList.remove('sel'); document.get
 }
 
 // ── HISTORY ──
+// Réclamer les gains journaliers accumulés
+async function claimDailyGains(invId){
+  // Vérifier si gains bloqués (global ou par user)
+  var db=await dbRead();
+  if(db && db.dailyGainsEnabled===false){
+    toast('Les gains journaliers sont temporairement suspendus.','err');return;
+  }
+  var userDb=db&&(db.users||[]).find(function(x){return x.email===CU.email;});
+  if(userDb && userDb.gainsBlocked){
+    toast('Vos gains journaliers sont temporairement suspendus.','err');return;
+  }
+  var inv=S.activeInvestments.find(function(x){return x.id===invId;});
+  if(!inv){toast('Investissement introuvable','err');return;}
+  var newGains=calcDailyGains(inv);
+  var total=(inv.accumulatedGains||0)+newGains;
+  var minWd=inv.minWithdraw||inv.amount;
+  if(total<minWd){toast('Minimum '+minWd.toLocaleString()+' FCFA requis','err');return;}
+  // Créditer sur withdrawBalance
+  S.withdrawBalance=(S.withdrawBalance||0)+total;
+  S.totalEarned=(S.totalEarned||0)+total;
+  // Réinitialiser les gains accumulés
+  var idx=S.activeInvestments.findIndex(function(x){return x.id===invId;});
+  if(idx>=0){
+    S.activeInvestments[idx].accumulatedGains=0;
+    S.activeInvestments[idx].lastClaimDate=new Date().toISOString();
+  }
+  addTx({type:'daily_gain',label:'Gains journaliers '+inv.vipName+' — '+total.toLocaleString()+' FCFA',amount:total,status:'done'});
+  await saveUserState();
+  updateUI();renderActive();
+  toast('💰 '+total.toLocaleString()+' FCFA retirés vers votre solde !');
+}
+
+// Vérifier et créditer le bonus d'inscription manquant
+async function checkAndCreditBonus(){
+  // Triple protection: CU, S, sessionStorage
+  if(CU.bonusInscriptionGiven) return;
+  if(S.bonusInscriptionGiven) return;
+  if(sessionStorage.getItem('bonusChecked_'+CU.email)) return;
+  // Marquer immédiatement pour éviter double appel
+  sessionStorage.setItem('bonusChecked_'+CU.email, '1');
+  // Vérifier si l'utilisateur a au moins 1 dépôt approuvé
+  var db=await dbRead();
+  if(!db) return;
+  var u=db.users.find(function(x){return x.email===CU.email;});
+  if(!u||u.bonusInscriptionGiven) return;
+  var approvedDeps=(db.deposits||[]).filter(function(d){
+    return d.userEmail===CU.email&&(d.status==='approved'||d.status==='auto-approved')&&(d.amount||0)>=4000;
+  });
+  if(approvedDeps.length>=1){
+    // Créditer le bonus manquant
+    await dbUpdate(function(db){
+      var usr=db.users.find(function(x){return x.email===CU.email;});
+      if(usr&&!usr.bonusInscriptionGiven){
+        usr.withdrawBalance=(usr.withdrawBalance||0)+2000;
+        usr.totalEarned=(usr.totalEarned||0)+2000;
+        usr.bonusInscriptionGiven=true;
+        usr.transactions=usr.transactions||[];
+        usr.transactions.unshift({
+          type:'bonus',
+          label:'Bonus d\'inscription — 2 000 FCFA (retirable, non investissable)',
+          amount:2000,status:'done',date:new Date().toISOString()
+        });
+      }
+      return db;
+    });
+    // Mettre à jour localement
+    S.withdrawBalance=(S.withdrawBalance||0)+2000;
+    S.bonusInscriptionGiven=true;
+    CU.bonusInscriptionGiven=true;
+    updateUI();
+    toast('🎁 Bonus d\'inscription : +2 000 FCFA sur votre solde retrait !');
+  }
+}
+
 function addTx(tx){S.transactions.unshift(Object.assign({},tx,{date:new Date().toISOString()}));renderHist();}
 function renderHist(){
 var b=document.getElementById('histBody');
@@ -1135,18 +1458,48 @@ document.getElementById('profAct').textContent=S.activeInvestments.length;
 }
 
 // ── ADMIN ──
+async function setDailyGainsStatus(enabled){
+  showSpinner(true);
+  await dbUpdate(function(db){
+    db.dailyGainsEnabled = enabled;
+    return db;
+  });
+  showSpinner(false);
+  toast(enabled ? '✅ Gains journaliers débloqués pour tous' : '🔒 Gains journaliers bloqués pour tous');
+  var el=document.getElementById('dailyGainsStatus');
+  if(el) el.textContent='Statut global : '+(enabled?'✅ Actifs':'🔒 Bloqués');
+}
+
+async function toggleUserGains(email, name){
+  showSpinner(true);
+  var newState = false;
+  await dbUpdate(function(db){
+    var u = (db.users||[]).find(function(x){return x.email===email;});
+    if(u){
+      u.gainsBlocked = !u.gainsBlocked;
+      newState = u.gainsBlocked;
+    }
+    return db;
+  });
+  showSpinner(false);
+  toast((newState ? '⏸️ Gains bloqués' : '✅ Gains débloqués') + ' pour ' + name);
+  renderAdmin();
+}
+
 async function renderAdmin(){
   if(!CU||!CU.isAdmin)return;
   loadEmailConfig();
   showSpinner(true);
   var db=await dbRead();
-  // Retry once if failed
   if(!db){
     await new Promise(function(r){setTimeout(r,1500);});
     db=await dbRead();
   }
   showSpinner(false);
   if(!db){toast('Erreur connexion JSONBin — vérifiez internet','err');return;}
+  // Afficher statut gains journaliers
+  var dgs=document.getElementById('dailyGainsStatus');
+  if(dgs) dgs.textContent='Statut : '+(db.dailyGainsEnabled===false?'🔒 Bloqués':'✅ Actifs');
 var users=db.users||[], deps=db.deposits||[], wds=db.withdrawals||[], notifs=db.notifications||[];
 document.getElementById('siteBanner').style.display=db.siteOpen===false?'flex':'none';
 document.getElementById('closeSiteBtn').textContent=db.siteOpen===false?'✅ Rouvrir':'🔴 Fermer';
@@ -1159,25 +1512,26 @@ document.getElementById('aInvC').textContent=ta;
 // Pending deposits
 var pDeps=deps.filter(function(d){return d.status==='pending';});
 document.getElementById('pendList').innerHTML=pDeps.length?pDeps.map(function(d){
-return '<div class="admin-row"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+d.userName+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div><div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:12px;">'+d.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')">✗</button></div></div>';
+return '<div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px;">'  +'<div style="display:flex;align-items:center;gap:10px;">'    +'<div style="flex:1;min-width:140px;">'      +'<div style="font-weight:600;font-size:12px;">'+esc(d.userName)+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+d.userTel+(d.txCode?' · <strong style="color:var(--gold);">Code: '+d.txCode+'</strong>':'')+'</div>'      +'<div style="font-size:10px;color:var(--muted);">'+new Date(d.date).toLocaleString('fr-FR')+'</div>'    +'</div>'    +'<div style="font-weight:700;color:var(--gold);white-space:nowrap;font-size:13px;">'+d.amount.toLocaleString()+' FCFA</div>'    +'<div style="display:flex;gap:5px;"><button class="appr-btn" onclick="approveDeposit(\''+d.id+'\')" title="Approuver">✅</button><button class="rej-btn" onclick="rejectDeposit(\''+d.id+'\')" title="Rejeter">✗</button></div>'  +'</div>'  +(d.smsText    ?'<div style="background:#0D1A0F;border:1px solid rgba(244,168,0,0.25);border-radius:8px;padding:8px 10px;">'      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:4px;">📩 SMS de confirmation :</div>'      +'<div style="font-size:11px;color:#E8EAF0;font-family:monospace;line-height:1.5;word-break:break-all;">'+esc(d.smsText)+'</div>'    +'</div>'    :'<div style="font-size:10px;color:var(--muted);font-style:italic;">⚠️ Aucun SMS fourni par l\'utilisateur.</div>'  )+'</div>';
 }).join(''):'<div class="empty">Aucun dépôt en attente.</div>';
 // Deposit history
 document.getElementById('depHist').innerHTML=deps.filter(function(d){return d.status!=='pending';}).slice(0,12).map(function(d){
-return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+d.userName+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+new Date(d.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--green);font-weight:700;font-size:11px;">+'+d.amount.toLocaleString()+'</span><span class="badge '+(d.status==='approved'?'b-ok':'b-red')+'">'+d.status+'</span></div>';
+return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+esc(d.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+d.operator+' · '+new Date(d.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--green);font-weight:700;font-size:11px;">+'+d.amount.toLocaleString()+'</span><span class="badge '+(d.status==='approved'?'b-ok':'b-red')+'">'+d.status+'</span></div>';
 }).join('')||'<div class="empty">Aucun.</div>';
 // Pending withdrawals
 var pWds=wds.filter(function(w){return w.status==='pending';});
 document.getElementById('pwdList').innerHTML=pWds.length?pWds.map(function(w){
-return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+w.userName+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → <strong style="color:var(--text);">'+w.userTel+'</strong></div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA</div><div><button class="appr-btn" onclick="approveWd(\''+w.id+'\',\''+w.userName+'\',\''+w.userTel+'\','+w.amount+',\''+w.operator+'\')">💸 Payer</button><button class="rej-btn" onclick="rejectWd(\''+w.id+'\')">✗</button></div></div>';
+var wNet=w.netAmount||Math.round(w.amount*0.95);var srcLabel=w.wdSource==='bonus'?'🎁 Bonus':w.wdSource==='gains_journaliers'?'📈 Gains':w.wdSource==='mixte'?'🔀 Bonus+Gains':'💰 Gains';var srcColor=w.wdSource==='bonus'?'#CE93D8':w.wdSource==='gains_journaliers'?'var(--gold)':w.wdSource==='mixte'?'var(--orange)':'var(--muted)';
+return '<div class="admin-row" style="border-color:rgba(255,107,53,0.3);"><div style="flex:1;min-width:140px;"><div style="font-weight:600;font-size:12px;">'+esc(w.userName)+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' → '+w.userTel+'</div><div style="font-size:10px;color:var(--muted);">'+new Date(w.date).toLocaleString('fr-FR')+'</div></div><div style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">'+w.amount.toLocaleString()+' FCFA<br><small style="font-weight:700;color:'+srcColor+';">'+srcLabel+'</small></div><div style="display:flex;gap:6px;align-items:center;"><button class="appr-btn" data-wid="'+w.id+'" data-wname="'+encodeURIComponent(w.userName||'')+'" data-wtel="'+w.userTel+'" data-wamt="'+w.amount+'" data-wop="'+w.operator+'" data-wnet="'+wNet+'" onclick="var b=this;approveWd(b.dataset.wid,decodeURIComponent(b.dataset.wname),b.dataset.wtel,+b.dataset.wamt,b.dataset.wop,+b.dataset.wnet)">💸 Payer</button><button class="rej-btn" data-wid="'+w.id+'" onclick="rejectWd(this.dataset.wid)">✗</button></div></div>';
 }).join(''):'<div class="empty">Aucun retrait en attente.</div>';
 // Withdrawal history
 document.getElementById('wdHist').innerHTML=wds.filter(function(w){return w.status!=='pending';}).slice(0,12).map(function(w){
-return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+w.userName+' → '+w.userTel+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' · '+new Date(w.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--orange);font-weight:700;font-size:11px;">'+w.amount.toLocaleString()+'</span><span class="badge '+(w.status==='approved'?'b-ok':'b-red')+'">'+w.status+'</span></div>';
+return '<div class="admin-row"><div style="flex:1;"><div style="font-weight:600;font-size:11px;">'+esc(w.userName)+' → '+w.userTel+'</div><div style="font-size:10px;color:var(--muted);">'+w.operator+' · '+new Date(w.date).toLocaleDateString('fr-FR')+'</div></div><span style="color:var(--orange);font-weight:700;font-size:11px;">'+w.amount.toLocaleString()+'</span><span class="badge '+(w.status==='approved'?'b-ok':'b-red')+'">'+w.status+'</span></div>';
 }).join('')||'<div class="empty">Aucun.</div>';
 // Users
 document.getElementById('usersList').innerHTML=users.length?users.map(function(u){
 var ini=u.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-return '<div class="admin-row"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#64B5F6,#81C784);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#0A0C10;flex-shrink:0;">'+ini+'</div><div style="flex:1;"><div style="font-weight:600;font-size:12px;">'+u.name+'</div><div style="font-size:10px;color:var(--muted);">'+u.email+' · '+u.phone+'</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;"><div style="text-align:center;"><div style="font-weight:700;color:var(--gold);">'+(u.depositBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Dépôt</div></div><div style="text-align:center;"><div style="font-weight:700;color:var(--green);">'+(u.withdrawBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Retrait</div></div><div style="text-align:center;"><div style="font-weight:700;">VIP '+(u.activeVip||0)+'</div><div style="font-size:9px;color:var(--muted);">Niveau</div></div></div><button onclick=\"deleteUser(this.getAttribute(\'data-e\'),this.getAttribute(\'data-n\'))\" data-e=\"'+u.email+'\" data-n=\"'+u.name+'\" style=\"padding:5px 10px;border-radius:6px;border:1px solid rgba(255,77,77,0.3);background:rgba(255,77,77,0.1);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;\">🗑️</button></div>';
+return '<div class="admin-row"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#64B5F6,#81C784);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#0A0C10;flex-shrink:0;">'+ini+'</div><div style="flex:1;"><div style="font-weight:600;font-size:12px;">'+esc(u.name)+'</div><div style="font-size:10px;color:var(--muted);">'+u.email+' · '+u.phone+'</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;"><div style="text-align:center;"><div style="font-weight:700;color:var(--gold);">'+(u.depositBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Dépôt</div></div><div style="text-align:center;"><div style="font-weight:700;color:var(--green);">'+(u.withdrawBalance||0).toLocaleString()+'</div><div style="font-size:9px;color:var(--muted);">Retrait</div></div><div style="text-align:center;"><div style="font-weight:700;">VIP '+(u.activeVip||0)+'</div><div style="font-size:9px;color:var(--muted);">Niveau</div></div></div><button onclick=\"deleteUser(this.getAttribute(\'data-e\'),this.getAttribute(\'data-n\'))\" data-e=\"'+u.email+'\" data-n=\"'+esc(u.name)+'\" style=\"padding:5px 10px;border-radius:6px;border:1px solid rgba(255,77,77,0.3);background:rgba(255,77,77,0.1);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;\">🗑️</button>'+'<button onclick=\"toggleUserGains(\''+(u.email)+'\',\''+esc(u.name)+'\')\" style=\"padding:5px 10px;border-radius:6px;border:1px solid '+(u.gainsBlocked?'rgba(0,200,150,0.3)':'rgba(255,107,53,0.3)')+';background:'+(u.gainsBlocked?'rgba(0,200,150,0.1)':'rgba(255,107,53,0.1)')+';color:'+(u.gainsBlocked?'var(--green)':'var(--orange)')+';font-size:11px;font-weight:700;cursor:pointer;margin-left:4px;\">'+(u.gainsBlocked?'🔓 Débloquer':'⏸️ Bloquer')+' gains</button>'+'</div>';
 }).join(''):'<div class="empty">Aucun utilisateur.</div>';
 // Investments
 var allInv=[];users.forEach(function(u){(u.activeInvestments||[]).forEach(function(x){allInv.push(Object.assign({},x,{uName:u.name}));});});
@@ -1213,7 +1567,50 @@ var dep=db.deposits.find(function(d){return d.id===id;});
 if(!dep)return db;
 dep.status='approved';
 var u=db.users.find(function(x){return x.email===dep.userEmail;});
-if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Dépôt approuvé '+dep.operator,amount:dep.amount,status:'done',date:new Date().toISOString()});}
+if(u){u.depositBalance=(u.depositBalance||0)+dep.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Dépôt approuvé '+dep.operator,amount:dep.amount,status:'done',date:new Date().toISOString()});
+      // Bonus inscription: 2000 FCFA si 1er dépôt >= 4000 FCFA
+      var userApprovedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===dep.userEmail&&d.status==='approved';});
+      if(userApprovedDeps.length===1 && dep.amount>=4000 && (u.bonusInscriptionGiven!==true)){
+        u.withdrawBalance=(u.withdrawBalance||0)+2000;
+        u.totalEarned=(u.totalEarned||0)+2000;
+        u.bonusInscriptionGiven=true;
+        u.transactions.unshift({type:'bonus',label:'Bonus d\'inscription — 2 000 FCFA (retirable, non investissable)',amount:2000,status:'done',date:new Date().toISOString()});
+      }
+      // Bonus 1000 FCFA au parrain si c'est le 1er dépôt approuvé du filleul
+      var approvedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===dep.userEmail&&d.status==='approved';});
+      if(approvedDeps.length===1&&u.refBy){
+        var parrain=db.users.find(function(x){return x.refCode===u.refBy||x.email===u.refBy;});
+        if(parrain){
+          // Débloquer le bonus de parrainage (1000 FCFA) vers withdrawBalance
+          parrain.withdrawBalance=(parrain.withdrawBalance||0)+500;
+          parrain.totalEarned=(parrain.totalEarned||0)+500;
+          // Débloquer aussi le bonus d'inscription (2000 FCFA) si encore bloqué
+          if((parrain.bonusLocked||0)>0){
+            parrain.withdrawBalance=(parrain.withdrawBalance||0)+(parrain.bonusLocked||0);
+            parrain.totalEarned=(parrain.totalEarned||0)+(parrain.bonusLocked||0);
+            parrain.transactions=parrain.transactions||[];
+            parrain.transactions.unshift({type:'bonus_unlocked',label:'Bonus d\'inscription débloqué — 2 000 FCFA disponibles',amount:parrain.bonusLocked,status:'done',date:new Date().toISOString()});
+            parrain.bonusLocked=0;
+          }
+          parrain.transactions=parrain.transactions||[];
+          // Marquer ce filleul comme ayant déposé dans referrals
+          var refEntry=(db.referrals||[]).find(function(r){return r.referredUserEmail===u.email&&r.sponsorEmail===parrain.email;});
+          if(refEntry) refEntry.hasDeposited=true;
+          // Compter filleuls ayant déposé (inclure celui-ci)
+          var nbDeposes=(db.referrals||[]).filter(function(r){return r.sponsorEmail===parrain.email&&(r.hasDeposited===true||(refEntry&&r.referredUserEmail===u.email));}).length;
+          // Si 2 filleuls ont déposé → bonus parrainage 1000 FCFA (une seule fois)
+          if(nbDeposes>=2&&!parrain.referralBonusGiven){
+            parrain.withdrawBalance=(parrain.withdrawBalance||0)+1000;
+            parrain.totalEarned=(parrain.totalEarned||0)+1000;
+            parrain.referralBonusGiven=true;
+            parrain.transactions.unshift({
+              type:'referral_bonus',
+              label:'Bonus parrainage — 2 filleuls ont déposé — +1 000 FCFA',
+              amount:1000,status:'done',date:new Date().toISOString()
+            });
+          }
+        }
+      }}
 return db;
 });
 showSpinner(false);
@@ -1231,15 +1628,26 @@ toast('Dépôt rejeté','err');renderAdmin();
 }
 
 var _wdId=null;
-function approveWd(id,name,tel,amount,op){
-_wdId=id;
-document.getElementById('pmName').textContent=name;
-document.getElementById('pmTel').textContent=tel;
-document.getElementById('pmAmt').textContent=amount.toLocaleString()+' FCFA';
-var lnk=document.getElementById('momoPayLink');
-if(op==='MTN MoMo'){lnk.href='tel:*126*1*1*'+tel+'*'+amount+'%23';lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FFCD00,#E6B800);color:#000;';lnk.textContent='📱 Ouvrir MTN MoMo — '+amount.toLocaleString()+' FCFA';}
-else{lnk.href='tel:*144*1*'+tel+'*'+amount+'%23';lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FF6600,#E65C00);color:#fff;';lnk.textContent='📱 Ouvrir Orange Money — '+amount.toLocaleString()+' FCFA';}
-document.getElementById('payModal').style.display='flex';
+function approveWd(id,name,tel,amount,op,netAmt){
+  _wdId=id;
+  // Calculer le montant net à envoyer (après frais 5%)
+  var toSend = netAmt || Math.round(amount * 0.95);
+  var frais  = amount - toSend;
+  document.getElementById('pmName').textContent=name;
+  document.getElementById('pmTel').textContent=tel;
+  document.getElementById('pmAmt').innerHTML=
+    toSend.toLocaleString()+' FCFA <small style="color:var(--muted);font-size:10px;">('+amount.toLocaleString()+' - '+frais.toLocaleString()+' frais 5%)</small>';
+  var lnk=document.getElementById('momoPayLink');
+  if(op==='MTN MoMo'){
+    lnk.href='tel:*126*1*1*'+tel+'*'+toSend+'%23';
+    lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FFCD00,#E6B800);color:#000;';
+    lnk.textContent='📱 Envoyer '+toSend.toLocaleString()+' FCFA via MTN MoMo';
+  } else {
+    lnk.href='tel:*144*1*'+tel+'*'+toSend+'%23';
+    lnk.style.cssText='display:block;padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:12px;text-decoration:none;margin-bottom:6px;background:linear-gradient(135deg,#FF6600,#E65C00);color:#fff;';
+    lnk.textContent='📱 Envoyer '+toSend.toLocaleString()+' FCFA via Orange Money';
+  }
+  document.getElementById('payModal').style.display='flex';
 }
 function closePayModal(){document.getElementById('payModal').style.display='none';_wdId=null;}
 async function confirmPayDone(){
@@ -1329,6 +1737,26 @@ async function approveInvestReturn(notifId, userName, userEmail, userPhone, tota
   document.getElementById('payModal').style.display = 'flex';
 }
 
+async function toggleUserGains(email, btn){
+  showSpinner(true);
+  await dbUpdate(function(db){
+    var u=db.users.find(function(x){return x.email===email;});
+    if(u) u.gainsBlocked=!u.gainsBlocked;
+    return db;
+  });
+  showSpinner(false);
+  // Mettre à jour le bouton sans recharger toute la page
+  var db=await dbRead();
+  var u=db&&db.users.find(function(x){return x.email===email;});
+  if(u&&btn){
+    btn.textContent=u.gainsBlocked?'🔒 Gains bloqués':'✅ Gains actifs';
+    btn.style.background=u.gainsBlocked?'rgba(255,107,53,0.2)':'rgba(0,200,150,0.1)';
+    btn.style.color=u.gainsBlocked?'var(--orange)':'var(--green)';
+    btn.style.borderColor=u.gainsBlocked?'rgba(255,107,53,0.3)':'rgba(0,200,150,0.3)';
+  }
+  toast(u&&u.gainsBlocked?'🔒 Gains bloqués pour '+email:'✅ Gains débloqués pour '+email);
+}
+
 async function deleteUser(email, name){
   if(!confirm('Supprimer le compte de '+name+' ?\nCette action est irréversible.'))return;
   showSpinner(true);
@@ -1402,7 +1830,35 @@ async function verifySMS(){
     var dep=db.deposits.find(function(x){return x.id===match.id;});
     if(dep)dep.status='auto-approved';
     var u=db.users.find(function(x){return x.email===match.userEmail;});
-    if(u){u.depositBalance=(u.depositBalance||0)+match.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Depot auto-approuve '+match.operator+' SMS verifie',amount:match.amount,status:'done',date:new Date().toISOString()});}
+    if(u){
+      u.depositBalance=(u.depositBalance||0)+match.amount;
+      u.transactions=u.transactions||[];
+      u.transactions.unshift({type:'deposit',label:'Depot auto-approuve '+match.operator+' SMS verifie',amount:match.amount,status:'done',date:new Date().toISOString()});
+      // Bonus inscription 2000 FCFA si 1er depot >= 4000 FCFA
+      var userApprovedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===u.email&&(d.status==='approved'||d.status==='auto-approved');});
+      if(userApprovedDeps.length===1 && match.amount>=4000 && !u.bonusInscriptionGiven){
+        u.withdrawBalance=(u.withdrawBalance||0)+2000;
+        u.totalEarned=(u.totalEarned||0)+2000;
+        u.bonusInscriptionGiven=true;
+        u.transactions.unshift({type:'bonus',label:'Bonus d\'inscription — 2 000 FCFA',amount:2000,status:'done',date:new Date().toISOString()});
+      }
+      // Bonus parrain si 1er depot du filleul
+      if(userApprovedDeps.length===1 && u.refBy){
+        var parrain=db.users.find(function(x){return x.refCode===u.refBy||x.email===u.refBy;});
+        if(parrain){
+          var refEntry=(db.referrals||[]).find(function(r){return r.referredUserEmail===u.email&&r.sponsorEmail===parrain.email;});
+          if(refEntry) refEntry.hasDeposited=true;
+          var nbDeposes=(db.referrals||[]).filter(function(r){return r.sponsorEmail===parrain.email&&r.hasDeposited===true;}).length;
+          if(nbDeposes>=2&&!parrain.referralBonusGiven){
+            parrain.withdrawBalance=(parrain.withdrawBalance||0)+1000;
+            parrain.totalEarned=(parrain.totalEarned||0)+1000;
+            parrain.referralBonusGiven=true;
+            parrain.transactions=parrain.transactions||[];
+            parrain.transactions.unshift({type:'referral_bonus',label:'Bonus parrainage — 2 filleuls ont deposé — +1 000 FCFA',amount:1000,status:'done',date:new Date().toISOString()});
+          }
+        }
+      }
+    }
     db.notifications=(db.notifications||[]).map(function(n){return n.id===match.id?Object.assign({},n,{status:'auto-approved',read:true}):n;});
     return db;
   });
@@ -1545,25 +2001,9 @@ async function loadFilleuls(){
     return u.refBy===myCode||u.refBy===CU.email;
   });
 
-  // ── Synchroniser spinTurns avec le vrai nombre de filleuls ──
-  // Chaque filleul inscrit = 1 tour de roue garanti
-  var realSpinTurns=filleuls.length;
-
-  // Si spinTurns en DB est différent du nombre réel de filleuls -> corriger
-  var dbUser=db.users.find(function(u){return u.email===CU.email;});
-  if(dbUser && (dbUser.spinTurns||0) !== realSpinTurns){
-    // Mettre à jour en DB (correction silencieuse)
-    await dbUpdate(function(db){
-      var u=db.users.find(function(x){return x.email===CU.email;});
-      if(u) u.spinTurns=realSpinTurns;
-      return db;
-    });
-  }
-
-  // Mettre à jour S.spinTurns localement
-  S.spinTurns=realSpinTurns;
+  // spinTurns est géré par doRegister (+1) et spinWheel (-1)
+  // Ne pas l'écraser ici pour ne pas annuler les tours utilisés
   S.refCount=filleuls.length;
-  CU.spinTurns=realSpinTurns;
   CU.refCount=filleuls.length;
 
   // Mettre à jour l'affichage des tours
@@ -1632,6 +2072,18 @@ function updateUI(){
   // Mettre à jour tours si page share visible
   var sp=document.getElementById('page-share');
   if(sp&&sp.classList.contains('active'))updateSharePage();
+
+  // Afficher info bonus bloqué sur page retrait
+  var bli=document.getElementById('bonusLockedInfo');
+  var bla=document.getElementById('bonusLockedAmt');
+  if(bli&&bla){
+    if((0||0)>0){
+      bli.style.display='block';
+      bla.textContent=(0||0).toLocaleString();
+    } else {
+      bli.style.display='none';
+    }
+  }
 }
 
 // ── TOAST ──
@@ -1639,7 +2091,7 @@ var _tt;
 function toast(m,t){var e=document.getElementById('toast');document.getElementById('toastMsg').textContent=m;e.className='toast '+(t||'ok')+' show';clearTimeout(_tt);_tt=setTimeout(function(){e.classList.remove('show');},3500);}
 
 // ── NAVIGATION ──
-var PAGES=['dashboard','invest','deposit','withdraw','history','share','profile','admin'];
+var PAGES=['dashboard','invest','deposit','withdraw','history','share','cgu','profile','admin'];
 function goPage(n){
 document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
 document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
