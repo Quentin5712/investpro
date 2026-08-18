@@ -882,10 +882,8 @@ var u=db.users.find(function(x){return x.email===CU.email;});
 if(u){CU=u;sessionStorage.setItem('cu',JSON.stringify(CU));}
 }
 S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
-  // Afficher notification bonus si nouveau compte
-  if(S.withdrawBalance===2000 && (CU.transactions||[]).length<=1 && !sessionStorage.getItem('bonusShown')){
-    setTimeout(function(){ toast('🎁 Bienvenue ! 2 000 FCFA offerts sur votre solde retrait !'); sessionStorage.setItem('bonusShown','1'); },1500);
-  } S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
+  // Vérifier bonus inscription pour anciens utilisateurs
+  setTimeout(function(){ checkAndCreditBonus(); }, 2000); S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
 S.activeInvestments=(CU.activeInvestments||[]).map(function(x){
     // Recalculer dailyGain à 1/5 pour tous (anciens et nouveaux)
     var dg=Math.floor((x.amount||0)*1/5);
@@ -1391,6 +1389,43 @@ async function claimDailyGains(invId){
   toast('💰 '+total.toLocaleString()+' FCFA retirés vers votre solde !');
 }
 
+// Vérifier et créditer le bonus d'inscription manquant
+async function checkAndCreditBonus(){
+  // Si déjà reçu, skip
+  if(CU.bonusInscriptionGiven) return;
+  // Vérifier si l'utilisateur a au moins 1 dépôt approuvé
+  var db=await dbRead();
+  if(!db) return;
+  var u=db.users.find(function(x){return x.email===CU.email;});
+  if(!u||u.bonusInscriptionGiven) return;
+  var approvedDeps=(db.deposits||[]).filter(function(d){
+    return d.userEmail===CU.email&&(d.status==='approved'||d.status==='auto-approved')&&(d.amount||0)>=4000;
+  });
+  if(approvedDeps.length>=1){
+    // Créditer le bonus manquant
+    await dbUpdate(function(db){
+      var usr=db.users.find(function(x){return x.email===CU.email;});
+      if(usr&&!usr.bonusInscriptionGiven){
+        usr.withdrawBalance=(usr.withdrawBalance||0)+2000;
+        usr.totalEarned=(usr.totalEarned||0)+2000;
+        usr.bonusInscriptionGiven=true;
+        usr.transactions=usr.transactions||[];
+        usr.transactions.unshift({
+          type:'bonus',
+          label:'Bonus d\'inscription — 2 000 FCFA (retirable, non investissable)',
+          amount:2000,status:'done',date:new Date().toISOString()
+        });
+      }
+      return db;
+    });
+    // Mettre à jour localement
+    S.withdrawBalance=(S.withdrawBalance||0)+2000;
+    CU.bonusInscriptionGiven=true;
+    updateUI();
+    toast('🎁 Bonus d\'inscription : +2 000 FCFA sur votre solde retrait !');
+  }
+}
+
 function addTx(tx){S.transactions.unshift(Object.assign({},tx,{date:new Date().toISOString()}));renderHist();}
 function renderHist(){
 var b=document.getElementById('histBody');
@@ -1790,7 +1825,35 @@ async function verifySMS(){
     var dep=db.deposits.find(function(x){return x.id===match.id;});
     if(dep)dep.status='auto-approved';
     var u=db.users.find(function(x){return x.email===match.userEmail;});
-    if(u){u.depositBalance=(u.depositBalance||0)+match.amount;u.transactions=u.transactions||[];u.transactions.unshift({type:'deposit',label:'Depot auto-approuve '+match.operator+' SMS verifie',amount:match.amount,status:'done',date:new Date().toISOString()});}
+    if(u){
+      u.depositBalance=(u.depositBalance||0)+match.amount;
+      u.transactions=u.transactions||[];
+      u.transactions.unshift({type:'deposit',label:'Depot auto-approuve '+match.operator+' SMS verifie',amount:match.amount,status:'done',date:new Date().toISOString()});
+      // Bonus inscription 2000 FCFA si 1er depot >= 4000 FCFA
+      var userApprovedDeps=(db.deposits||[]).filter(function(d){return d.userEmail===u.email&&(d.status==='approved'||d.status==='auto-approved');});
+      if(userApprovedDeps.length===1 && match.amount>=4000 && !u.bonusInscriptionGiven){
+        u.withdrawBalance=(u.withdrawBalance||0)+2000;
+        u.totalEarned=(u.totalEarned||0)+2000;
+        u.bonusInscriptionGiven=true;
+        u.transactions.unshift({type:'bonus',label:'Bonus d\'inscription — 2 000 FCFA',amount:2000,status:'done',date:new Date().toISOString()});
+      }
+      // Bonus parrain si 1er depot du filleul
+      if(userApprovedDeps.length===1 && u.refBy){
+        var parrain=db.users.find(function(x){return x.refCode===u.refBy||x.email===u.refBy;});
+        if(parrain){
+          var refEntry=(db.referrals||[]).find(function(r){return r.referredUserEmail===u.email&&r.sponsorEmail===parrain.email;});
+          if(refEntry) refEntry.hasDeposited=true;
+          var nbDeposes=(db.referrals||[]).filter(function(r){return r.sponsorEmail===parrain.email&&r.hasDeposited===true;}).length;
+          if(nbDeposes>=2&&!parrain.referralBonusGiven){
+            parrain.withdrawBalance=(parrain.withdrawBalance||0)+1000;
+            parrain.totalEarned=(parrain.totalEarned||0)+1000;
+            parrain.referralBonusGiven=true;
+            parrain.transactions=parrain.transactions||[];
+            parrain.transactions.unshift({type:'referral_bonus',label:'Bonus parrainage — 2 filleuls ont deposé — +1 000 FCFA',amount:1000,status:'done',date:new Date().toISOString()});
+          }
+        }
+      }
+    }
     db.notifications=(db.notifications||[]).map(function(n){return n.id===match.id?Object.assign({},n,{status:'auto-approved',read:true}):n;});
     return db;
   });
@@ -2004,6 +2067,8 @@ function updateUI(){
   // Mettre à jour tours si page share visible
   var sp=document.getElementById('page-share');
   if(sp&&sp.classList.contains('active'))updateSharePage();
+  // Vérifier bonus inscription manquant pour anciens utilisateurs
+  checkAndCreditBonus();
   // Afficher info bonus bloqué sur page retrait
   var bli=document.getElementById('bonusLockedInfo');
   var bla=document.getElementById('bonusLockedAmt');
