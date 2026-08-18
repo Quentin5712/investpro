@@ -1391,8 +1391,12 @@ async function claimDailyGains(invId){
 
 // Vérifier et créditer le bonus d'inscription manquant
 async function checkAndCreditBonus(){
-  // Si déjà reçu, skip
+  // Triple protection: CU, S, sessionStorage
   if(CU.bonusInscriptionGiven) return;
+  if(S.bonusInscriptionGiven) return;
+  if(sessionStorage.getItem('bonusChecked_'+CU.email)) return;
+  // Marquer immédiatement pour éviter double appel
+  sessionStorage.setItem('bonusChecked_'+CU.email, '1');
   // Vérifier si l'utilisateur a au moins 1 dépôt approuvé
   var db=await dbRead();
   if(!db) return;
@@ -1420,6 +1424,7 @@ async function checkAndCreditBonus(){
     });
     // Mettre à jour localement
     S.withdrawBalance=(S.withdrawBalance||0)+2000;
+    S.bonusInscriptionGiven=true;
     CU.bonusInscriptionGiven=true;
     updateUI();
     toast('🎁 Bonus d\'inscription : +2 000 FCFA sur votre solde retrait !');
@@ -2067,8 +2072,7 @@ function updateUI(){
   // Mettre à jour tours si page share visible
   var sp=document.getElementById('page-share');
   if(sp&&sp.classList.contains('active'))updateSharePage();
-  // Vérifier bonus inscription manquant pour anciens utilisateurs
-  checkAndCreditBonus();
+
   // Afficher info bonus bloqué sur page retrait
   var bli=document.getElementById('bonusLockedInfo');
   var bla=document.getElementById('bonusLockedAmt');
