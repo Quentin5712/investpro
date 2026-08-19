@@ -882,8 +882,7 @@ var u=db.users.find(function(x){return x.email===CU.email;});
 if(u){CU=u;sessionStorage.setItem('cu',JSON.stringify(CU));}
 }
 S.depositBalance=CU.depositBalance||0; S.withdrawBalance=CU.withdrawBalance||0;
-  // Vérifier bonus inscription pour anciens utilisateurs
-  setTimeout(function(){ checkAndCreditBonus(); }, 2000); S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
+   S.totalEarned=CU.totalEarned||0; S.activeVip=CU.activeVip||0;
 S.activeInvestments=(CU.activeInvestments||[]).map(function(x){
     // Recalculer dailyGain à 1/5 pour tous (anciens et nouveaux)
     var dg=Math.floor((x.amount||0)*1/5);
@@ -1387,48 +1386,6 @@ async function claimDailyGains(invId){
   await saveUserState();
   updateUI();renderActive();
   toast('💰 '+total.toLocaleString()+' FCFA retirés vers votre solde !');
-}
-
-// Vérifier et créditer le bonus d'inscription manquant
-async function checkAndCreditBonus(){
-  // Triple protection: CU, S, sessionStorage
-  if(CU.bonusInscriptionGiven) return;
-  if(S.bonusInscriptionGiven) return;
-  if(sessionStorage.getItem('bonusChecked_'+CU.email)) return;
-  // Marquer immédiatement pour éviter double appel
-  sessionStorage.setItem('bonusChecked_'+CU.email, '1');
-  // Vérifier si l'utilisateur a au moins 1 dépôt approuvé
-  var db=await dbRead();
-  if(!db) return;
-  var u=db.users.find(function(x){return x.email===CU.email;});
-  if(!u||u.bonusInscriptionGiven) return;
-  var approvedDeps=(db.deposits||[]).filter(function(d){
-    return d.userEmail===CU.email&&(d.status==='approved'||d.status==='auto-approved')&&(d.amount||0)>=4000;
-  });
-  if(approvedDeps.length>=1){
-    // Créditer le bonus manquant
-    await dbUpdate(function(db){
-      var usr=db.users.find(function(x){return x.email===CU.email;});
-      if(usr&&!usr.bonusInscriptionGiven){
-        usr.withdrawBalance=(usr.withdrawBalance||0)+2000;
-        usr.totalEarned=(usr.totalEarned||0)+2000;
-        usr.bonusInscriptionGiven=true;
-        usr.transactions=usr.transactions||[];
-        usr.transactions.unshift({
-          type:'bonus',
-          label:'Bonus d\'inscription — 2 000 FCFA (retirable, non investissable)',
-          amount:2000,status:'done',date:new Date().toISOString()
-        });
-      }
-      return db;
-    });
-    // Mettre à jour localement
-    S.withdrawBalance=(S.withdrawBalance||0)+2000;
-    S.bonusInscriptionGiven=true;
-    CU.bonusInscriptionGiven=true;
-    updateUI();
-    toast('🎁 Bonus d\'inscription : +2 000 FCFA sur votre solde retrait !');
-  }
 }
 
 function addTx(tx){S.transactions.unshift(Object.assign({},tx,{date:new Date().toISOString()}));renderHist();}
